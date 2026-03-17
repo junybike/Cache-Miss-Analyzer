@@ -1,0 +1,7 @@
+g++ -O2 -g -no-pie tmp.cpp -o tmp
+perf record -e cache-misses:u -g ./tmp
+perf script > perf_script.txt
+python3 parser.py tmp perf_script.txt
+
+From root,
+./profiler/run_perf.sh benchmarks/vector_test/tmp
