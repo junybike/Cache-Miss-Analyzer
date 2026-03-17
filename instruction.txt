@@ -1,14 +1,13 @@
-g++ -O2 -g -no-pie tmp.cpp -o tmp
-perf record -e cache-misses:u -g ./tmp
-perf script > perf_script.txt
-python3 parser.py tmp perf_script.txt
-
-Must compile benchmark on your machine to run run_perf
+Must compile benchmark on your machine to run 'run_perf'
 sample compilation for benchmark
 g++ -g -no-pie tmp.cpp -o tmp
 
-sudo sysctl kernel.perf_event_paranoid=1
+[Perf and run_perf permission]
+sudo sysctl kernel.perf_event_paranoid=0
 chmod +x profiler/run_perf.sh
 
 From root,
-./profiler/run_perf.sh benchmarks/vector_test/tmp
+./profiler/run_perf.sh benchmarks/tmp
+
+From analysis/build
+./ast_analyzer ../../benchmarks/tmp.cpp -- -std=c++17

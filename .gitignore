@@ -1,3 +1,6 @@
-*.data
-*script.txt
 .vscode
+*.data
+*.old
+*script.txt
+*cache_lines.txt
+build
