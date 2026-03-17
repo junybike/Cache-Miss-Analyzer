@@ -1,2 +1,0 @@
-main at /home/jsn/cmpt-479/tmp.cpp:17 24
-main at /home/jsn/cmpt-479/tmp.cpp:23 19

@@ -42,6 +42,9 @@ with open(perf_file) as file:
 addresses = list(address_counts.keys())
 lines = addr_to_line(binary, addresses)
 
+# print(address_counts)
+# print(lines)
+
 for addr, line in zip(addresses, lines):
     line = normalize_line(line)
 
@@ -51,4 +54,6 @@ for addr, line in zip(addresses, lines):
     line_counts[line] += address_counts[addr]
 
 for line, count in sorted(line_counts.items(), key=lambda x: x[1], reverse=True):
+    if binary not in line:
+        continue
     print(line, count)

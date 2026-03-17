@@ -12,7 +12,7 @@ mkdir -p "$DATA_DIR"
 mkdir -p "$RESULT_DIR"
 
 echo "Recording perf data..."
-rm "$DATA_DIR/${NAME}.data"
+# rm "$DATA_DIR/${NAME}.data"
 perf record -e cache-misses:u -g -o "$DATA_DIR/${NAME}.data" -- "$BINARY"
 
 echo "Generating perf script..."
