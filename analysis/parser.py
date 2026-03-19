@@ -1,6 +1,7 @@
 import re, subprocess, argparse, os
 from collections import defaultdict
 
+# Convert addresses to source lines
 def addr_to_line(binary, addresses):
     input_data = "\n".join("0x" + a for a in addresses)
 
@@ -31,6 +32,7 @@ binary = args.binary
 perf_file = args.perf_script
 binary_name = os.path.basename(binary)
 
+# Get instruction addresses
 with open(perf_file) as file:
     for line in file:
         m = re.match(r'\s*([0-9a-f]+)\s', line)
@@ -39,12 +41,14 @@ with open(perf_file) as file:
             addr = m.group(1)
             address_counts[addr] += 1
 
+# Map addresses to source lines
 addresses = list(address_counts.keys())
 lines = addr_to_line(binary, addresses)
 
 # print(address_counts)
 # print(lines)
 
+# Get counts per line
 for addr, line in zip(addresses, lines):
     line = normalize_line(line)
 
@@ -53,6 +57,7 @@ for addr, line in zip(addresses, lines):
 
     line_counts[line] += address_counts[addr]
 
+# Results (Number of count: highest to lowest)
 for line, count in sorted(line_counts.items(), key=lambda x: x[1], reverse=True):
     if binary not in line:
         continue

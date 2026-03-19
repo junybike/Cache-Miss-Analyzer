@@ -9,5 +9,12 @@ chmod +x profiler/run_perf.sh
 From root,
 ./profiler/run_perf.sh benchmarks/tmp
 
-From analysis/build
+From build, cmake ..
+make
+
+From analysis/build,
 ./ast_analyzer ../../benchmarks/tmp.cpp -- -std=c++17
+
+From analysis
+make mkdir build
+

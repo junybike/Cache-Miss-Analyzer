@@ -12,6 +12,7 @@
 
 using namespace clang;
 
+// Unwrap expressions. Filter out implicit casts to see actual variables in the code.  
 Expr* unwrapExpr(Expr* expr)
 {
     while (true)
@@ -23,24 +24,30 @@ Expr* unwrapExpr(Expr* expr)
     return expr;
 }
 
+// Walks through AST nodes
 class AccessVisitor : public RecursiveASTVisitor<AccessVisitor> 
 {
 public:
 
     ASTContext *Context;
 
+    // Stores AST context
     AccessVisitor(ASTContext *context) : Context(context) {}
 
+    // Detects array accesses
     bool VisitArraySubscriptExpr(ArraySubscriptExpr *expr) 
     {
         SourceManager &SM = Context->getSourceManager();
         SourceLocation SL = SM.getExpansionLoc(expr->getExprLoc());
 
+        // Ignore invalid locations (system headers etc)
         if (SL.isInvalid()) return true;
         if (!SM.isWrittenInMainFile(SL)) return true;
-
+        
+        // The line number
         unsigned line = SM.getSpellingLineNumber(SL);
-
+        
+        // Unwrap to find actual variable
         Expr *base = unwrapExpr(expr->getBase());
         if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(base)) 
         {
@@ -51,6 +58,7 @@ public:
         return true;
     }
 
+    // Detects struct accesses
     bool VisitMemberExpr(MemberExpr *expr) 
     {
         SourceManager &SM = Context->getSourceManager();
@@ -73,6 +81,7 @@ public:
         return true;
     }
 
+    // Detects vector accesses
     bool VisitCXXOperatorCallExpr(CXXOperatorCallExpr *expr)
     {
         if (expr->getOperator() != OO_Subscript) return true;
@@ -96,6 +105,7 @@ public:
     }
 };
 
+// The entry point for AST traversal
 class AccessConsumer : public ASTConsumer 
 {
 public:
@@ -107,6 +117,7 @@ public:
     }
 };
 
+// Connects Clang
 class AccessAction : public ASTFrontendAction 
 {
 public:
@@ -138,5 +149,6 @@ int main(int argc, const char **argv)
     tooling::CommonOptionsParser& OptionsParser = parser.get();
     tooling::ClangTool tool(OptionsParser.getCompilations(), OptionsParser.getSourcePathList());
 
+    // Begin AST analysis
     return tool.run(tooling::newFrontendActionFactory<AccessAction>().get());
 }
