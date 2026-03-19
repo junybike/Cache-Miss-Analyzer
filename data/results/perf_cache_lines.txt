@@ -1,0 +1,4 @@
+main at /home/jsn/479_project/benchmarks/tmp.cpp:17 139
+main at /home/jsn/479_project/benchmarks/tmp.cpp:25 93
+main at /home/jsn/479_project/benchmarks/tmp.cpp:19 82
+main at /home/jsn/479_project/benchmarks/tmp.cpp:23 10

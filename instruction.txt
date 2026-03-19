@@ -1,13 +1,16 @@
-Must compile benchmark on your machine to run 'run_perf'
-sample compilation for benchmark
+analyze.py: maps ast_accesses with cache misses
+ast_analyzer.cpp: records variable, array, vector, struct accesses
+parser.py: maps cache miss addresses to lines numbers in code
+
+[How to use]
+
+Must compile a benchmark on your machine to run 'run_perf'
+Sample compilation for benchmark
 g++ -g -no-pie tmp.cpp -o tmp
 
-[Perf and run_perf permission]
+Perf and run_perf permission
 sudo sysctl kernel.perf_event_paranoid=0
 chmod +x profiler/run_perf.sh
-
-From root,
-./profiler/run_perf.sh benchmarks/tmp
 
 From build, cmake ..
 make
@@ -18,3 +21,5 @@ From analysis/build,
 From analysis
 make mkdir build
 
+From root
+./profiler/run_perf.sh benchmarks/tmp benchmarks/tmp.cpp
