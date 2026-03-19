@@ -1,10 +1,10 @@
-import re, subprocess, argparse, os
+import re, subprocess, argparse, os, json
 from collections import defaultdict
 
-# Convert addresses to source lines
-def addr_to_line(binary, addresses):
-    input_data = "\n".join("0x" + a for a in addresses)
 
+def addr_to_line(binary, addresses):
+    """Batch-convert instruction addresses to source lines via addr2line."""
+    input_data = "\n".join("0x" + a for a in addresses)
     result = subprocess.run(
         ["addr2line", "-e", binary, "-f", "-p"],
         input=input_data,
@@ -13,52 +13,46 @@ def addr_to_line(binary, addresses):
     )
     return result.stdout.splitlines()
 
-def normalize_line(line):
-    line = re.sub(r'\s*\(discriminator.*\)', '', line)
-    return line
+
+def strip_discriminator(line):
+    return re.sub(r'\s*\(discriminator.*\)', '', line)
 
 
-
-address_counts = defaultdict(int)
-line_counts = defaultdict(int)
-
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(
+    description="Map perf cache-miss addresses to source line numbers."
+)
 parser.add_argument("binary", help="path to binary")
 parser.add_argument("perf_script", help="perf script output file")
-
+parser.add_argument("--source", help="source file path (for filtering addr2line output)")
 args = parser.parse_args()
 
-binary = args.binary
-perf_file = args.perf_script
-binary_name = os.path.basename(binary)
+binary_name = os.path.basename(args.binary)
+# Use source basename for addr2line filtering when available, since the
+# addr2line output contains the source path (not the binary path).
+# Falling back to binary_name works when the two share a name.
+source_name = os.path.basename(args.source) if args.source else binary_name
 
-# Get instruction addresses
-with open(perf_file) as file:
-    for line in file:
+# Count how many cache-miss samples landed on each instruction address
+address_counts = defaultdict(int)
+with open(args.perf_script) as f:
+    for line in f:
         m = re.match(r'\s*([0-9a-f]+)\s', line)
-
         if m and "(" in line and binary_name in line:
-            addr = m.group(1)
-            address_counts[addr] += 1
+            address_counts[m.group(1)] += 1
 
-# Map addresses to source lines
+# Resolve addresses to source lines, then aggregate by line number
 addresses = list(address_counts.keys())
-lines = addr_to_line(binary, addresses)
+resolved = addr_to_line(args.binary, addresses)
 
-# print(address_counts)
-# print(lines)
+line_counts = defaultdict(int)
+for addr, resolved_line in zip(addresses, resolved):
+    resolved_line = strip_discriminator(resolved_line)
 
-# Get counts per line
-for addr, line in zip(addresses, lines):
-    line = normalize_line(line)
-
-    if line.startswith("??"):
+    if resolved_line.startswith("??") or source_name not in resolved_line:
         continue
 
-    line_counts[line] += address_counts[addr]
+    m = re.search(r':(\d+)', resolved_line)
+    if m:
+        line_counts[m.group(1)] += address_counts[addr]
 
-# Results (Number of count: highest to lowest)
-for line, count in sorted(line_counts.items(), key=lambda x: x[1], reverse=True):
-    if binary not in line:
-        continue
-    print(line, count)
+print(json.dumps(line_counts, indent=2))

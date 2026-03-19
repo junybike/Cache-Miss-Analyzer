@@ -1,43 +1,62 @@
+import json, sys, argparse
 from collections import defaultdict
-import re, sys
 
-ast_file = sys.argv[1]
-perf_file = sys.argv[2]
+parser = argparse.ArgumentParser(
+    description="Correlate AST variable accesses with perf cache-miss data."
+)
+parser.add_argument("ast_file", help="path to ast_accesses.json")
+parser.add_argument("perf_file", help="path to perf_cache_lines.json")
+args = parser.parse_args()
 
-line_to_vars = defaultdict(set)
+with open(args.ast_file) as f:
+    ast_data = json.load(f)
 
-# Parse ast 
-with open(ast_file) as file:
-    for line in file:
-        m = re.search(r'Line (\d+): .* access (\w+)', line)
-        if m:
-            line_number = int(m.group(1))
-            var_name = m.group(2)
-            line_to_vars[line_number].add(var_name)
+with open(args.perf_file) as f:
+    perf_data = json.load(f)
 
+# Map source lines to the AST accesses on that line
+line_to_vars = defaultdict(list)
+for acc in ast_data["accesses"]:
+    line_to_vars[acc["line"]].append(acc)
 
-line_freq = defaultdict(int)
+# Correlate perf miss counts with AST variable info
+var_info = {}
 
-# Parse perf
-with open(perf_file) as file:
-    for line in file:
-        m = re.search(r':(\d+)\s+(\d+)', line)
-        if m:
-            line_number = int(m.group(1))
-            count = int(m.group(2))
-            line_freq[line_number] += count
+for line_str, count in perf_data.items():
+    line_number = int(line_str)
+    if line_number not in line_to_vars:
+        continue
 
+    for acc in line_to_vars[line_number]:
+        var = acc["var"]
+        is_struct = acc["kind"] in ("struct_member", "aos_member")
 
-var_miss = defaultdict(int)
+        if var not in var_info:
+            var_info[var] = {"misses": 0, "kind": acc["kind"]}
+            if acc.get("element_type"):
+                var_info[var]["element_type"] = acc["element_type"]
+            if acc.get("struct_type"):
+                var_info[var]["struct_type"] = acc["struct_type"]
+            if is_struct:
+                var_info[var]["fields_accessed"] = set()
+                var_info[var]["has_ptr_advance"] = False
 
-# Maps perf and ast data
-for line_number, freq in line_freq.items():
-    if line_number in line_to_vars:
-        for var in line_to_vars[line_number]:
-            var_miss[var] += freq
+        var_info[var]["misses"] += count
 
+        if is_struct:
+            if acc.get("field"):
+                var_info[var]["fields_accessed"].add(acc["field"])
+            if acc.get("is_ptr_advance"):
+                var_info[var]["has_ptr_advance"] = True
 
-print("=== Cache Misses by Variable ===")
-for var, count in sorted(var_miss.items(), key=lambda x: -x[1]):
-    print(f"{var}: {count}")
+# Sets aren't JSON-serializable
+for info in var_info.values():
+    if "fields_accessed" in info:
+        info["fields_accessed"] = sorted(info["fields_accessed"])
 
+# Human-readable summary on stderr, JSON on stdout
+print("=== Cache Misses by Variable ===", file=sys.stderr)
+for var, info in sorted(var_info.items(), key=lambda x: -x[1]["misses"]):
+    print(f"{var}: {info['misses']}", file=sys.stderr)
+
+print(json.dumps(var_info, indent=2))

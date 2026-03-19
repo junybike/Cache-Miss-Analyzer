@@ -2,37 +2,59 @@
 
 set -e
 
-BINARY=$1
-SOURCE=$2
-NAME=$(basename $BINARY)
+if [ $# -lt 2 ]; then
+    echo "Usage: $0 <source.cpp> <binary>"
+    exit 1
+fi
+
+SOURCE=$1
+BINARY=$2
+
+if [ ! -f "$SOURCE" ]; then
+    echo "Error: source file '$SOURCE' not found"
+    exit 1
+fi
+
+if [ ! -f "$BINARY" ]; then
+    echo "Error: binary '$BINARY' not found"
+    exit 1
+fi
 
 DATA_DIR="data/perf"
 RESULT_DIR="data/results"
 AST_DIR="data/ast"
 
-mkdir -p "$DATA_DIR"
-mkdir -p "$RESULT_DIR"
-mkdir -p "$AST_DIR"
+mkdir -p "$DATA_DIR" "$RESULT_DIR" "$AST_DIR"
 
 echo "Recording perf data..."
-# rm "$DATA_DIR/${NAME}.data"
 perf record -e cache-misses:u -g -o "$DATA_DIR/perf.data" -- "$BINARY"
 
 echo "Generating perf script..."
 perf script -i "$DATA_DIR/perf.data" > "$DATA_DIR/perf_script.txt"
 
-echo "Running analysis..."
-python3 analysis/parser.py "$BINARY" "$DATA_DIR/perf_script.txt" \
-    > "$RESULT_DIR/perf_cache_lines.txt"
+echo "Mapping addresses to source lines..."
+python3 analysis/parser.py "$BINARY" "$DATA_DIR/perf_script.txt" --source "$SOURCE" \
+    > "$RESULT_DIR/perf_cache_lines.json"
 
-echo "[Parser.py]: Done."
-echo "Results saved to $RESULT_DIR/perf_cache_lines.txt"
+echo "Running AST analyzer..."
+./analysis/build/ast_analyzer "$SOURCE" -- > "$AST_DIR/ast_accesses.json"
 
-./analysis/build/ast_analyzer "$SOURCE" -- > "$AST_DIR/ast_accesses.txt"
-
+echo "Correlating data..."
 python3 analysis/analyze.py \
-    "$AST_DIR/ast_accesses.txt" \
-    "$RESULT_DIR/perf_cache_lines.txt" \
-    > "$RESULT_DIR/variable_cache.txt"
+    "$AST_DIR/ast_accesses.json" \
+    "$RESULT_DIR/perf_cache_lines.json" \
+    > "$RESULT_DIR/variable_cache.json"
 
+echo ""
+echo "Generating recommendations..."
+python3 analysis/recommend.py \
+    "$AST_DIR/ast_accesses.json" \
+    "$RESULT_DIR/variable_cache.json" \
+    "$RESULT_DIR/perf_cache_lines.json" \
+    | tee "$RESULT_DIR/recommendations.txt"
 
+python3 analysis/recommend.py \
+    "$AST_DIR/ast_accesses.json" \
+    "$RESULT_DIR/variable_cache.json" \
+    "$RESULT_DIR/perf_cache_lines.json" \
+    --json > "$RESULT_DIR/recommendations.json"

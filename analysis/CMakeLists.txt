@@ -1,3 +1,6 @@
+cmake_minimum_required(VERSION 3.16)
+project(ast_analyzer)
+
 find_package(LLVM REQUIRED CONFIG)
 find_package(Clang REQUIRED CONFIG)
 
@@ -17,4 +20,5 @@ target_link_libraries(ast_analyzer
     clangTooling
     clangFrontend
     clangAST
+    LLVMSupport
 )
