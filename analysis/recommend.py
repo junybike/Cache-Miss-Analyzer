@@ -1,8 +1,35 @@
-import json, argparse
+import json, argparse, subprocess
 from collections import defaultdict
 
-CACHE_LINE = 64
-MISS_THRESHOLD = 50
+FIELD_HEAT_RATIO = 0.2
+AOS_WASTE_THRESHOLD = 0.4
+MIN_FIELDS_AOS = 2
+HOT_COLD_MIN_SIZE_LINES = 2  # multiplied by cache_line at runtime
+MISS_THRESHOLD_RATIO = 0.05  # fraction of max misses used as adaptive threshold
+DEFAULT_CACHE_LINE = 64
+
+
+def detect_cache_line():
+    """Query the system for L1 data cache line size, fall back to 64."""
+    try:
+        result = subprocess.run(
+            ["getconf", "LEVEL1_DCACHE_LINESIZE"],
+            capture_output=True, text=True, timeout=5,
+        )
+        value = int(result.stdout.strip())
+        if value > 0:
+            return value
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        pass
+    return DEFAULT_CACHE_LINE
+
+
+def compute_miss_threshold(var_misses):
+    """Adaptive threshold: fraction of the highest miss count across all variables."""
+    if not var_misses:
+        return 0
+    max_misses = max(v.get("misses", 0) for v in var_misses.values())
+    return int(max_misses * MISS_THRESHOLD_RATIO)
 
 
 def get_misses(var_misses, var):
@@ -36,7 +63,7 @@ def compute_field_heat(accesses, var_misses, hot_lines):
 
 
 # Rule 1: linked-list pointer chasing in loops
-def rule_pointer_chasing(accesses, var_misses):
+def rule_pointer_chasing(accesses, var_misses, miss_threshold):
     seen = set()
     for acc in accesses:
         if (acc["kind"] == "struct_member"
@@ -44,7 +71,7 @@ def rule_pointer_chasing(accesses, var_misses):
                 and acc.get("is_ptr_advance")
                 and acc["var"] not in seen):
             misses = get_misses(var_misses, acc["var"])
-            if misses > MISS_THRESHOLD:
+            if misses > miss_threshold:
                 seen.add(acc["var"])
                 yield {
                     "severity": "HIGH",
@@ -66,7 +93,7 @@ def rule_pointer_chasing(accesses, var_misses):
 
 
 # Rule 2: Array-of-Structs where few fields dominate cache misses
-def rule_aos_to_soa(accesses, var_misses, structs, field_heat):
+def rule_aos_to_soa(accesses, var_misses, structs, field_heat, miss_threshold):
     # Group variables by struct type
     var_struct = {}
     var_lines = defaultdict(set)
@@ -82,7 +109,7 @@ def rule_aos_to_soa(accesses, var_misses, structs, field_heat):
 
         heat = field_heat.get(struct_type, {})
         all_fields = {f["name"] for f in structs[struct_type]["fields"]}
-        if len(all_fields) < 2:
+        if len(all_fields) < MIN_FIELDS_AOS:
             continue
 
         # A field is "hot" if its misses are significant relative to the
@@ -90,17 +117,17 @@ def rule_aos_to_soa(accesses, var_misses, structs, field_heat):
         # noise doesn't inflate the count, while cache-adjacent fields
         # (fewer samples due to shared cache lines) are still included.
         total_heat = sum(heat.values())
-        if total_heat <= MISS_THRESHOLD:
+        if total_heat <= miss_threshold:
             continue
 
         max_heat = max(heat.values()) if heat else 0
-        hot_fields = {f for f in all_fields if heat.get(f, 0) > max_heat * 0.2}
+        hot_fields = {f for f in all_fields if heat.get(f, 0) > max_heat * FIELD_HEAT_RATIO}
         cold_fields = all_fields - hot_fields
 
         waste = 1 - len(hot_fields) / len(all_fields)
         misses = get_misses(var_misses, var)
 
-        if waste > 0.4 and misses > MISS_THRESHOLD:
+        if waste > AOS_WASTE_THRESHOLD and misses > miss_threshold:
             yield {
                 "severity": "MEDIUM",
                 "pattern": "aos_to_soa",
@@ -125,11 +152,11 @@ def rule_aos_to_soa(accesses, var_misses, structs, field_heat):
 
 
 # Rule 3: hot fields span multiple cache lines due to interleaved cold fields
-def rule_struct_reorder(accesses, var_misses, structs, field_heat):
+def rule_struct_reorder(accesses, var_misses, structs, field_heat, cache_line, miss_threshold):
     for struct_name, layout in structs.items():
         heat = field_heat.get(struct_name, {})
         hot = [f for f in layout["fields"]
-               if heat.get(f["name"], 0) > MISS_THRESHOLD]
+               if heat.get(f["name"], 0) > miss_threshold]
 
         if len(hot) < 2:
             continue
@@ -137,9 +164,9 @@ def rule_struct_reorder(accesses, var_misses, structs, field_heat):
         offsets = [f["offset"] for f in hot]
         span = max(offsets) - min(offsets)
 
-        if span >= CACHE_LINE:
+        if span >= cache_line:
             cold = [f["name"] for f in layout["fields"]
-                    if heat.get(f["name"], 0) <= MISS_THRESHOLD]
+                    if heat.get(f["name"], 0) <= miss_threshold]
             yield {
                 "severity": "LOW",
                 "pattern": "struct_reorder",
@@ -152,7 +179,7 @@ def rule_struct_reorder(accesses, var_misses, structs, field_heat):
                 "problem": (
                     f"Hot fields ({', '.join(f['name'] for f in hot)}) "
                     f"are separated by cold fields, spanning {span} bytes "
-                    f"(>{CACHE_LINE}-byte cache line)."
+                    f"(>{cache_line}-byte cache line)."
                 ),
                 "fix": (
                     f"Move hot fields to the top of struct {struct_name}; "
@@ -162,10 +189,10 @@ def rule_struct_reorder(accesses, var_misses, structs, field_heat):
 
 
 # Rule 4: large struct where hot fields fit in one cache line but cold fields dominate
-def rule_hot_cold_partition(accesses, var_misses, structs, field_heat):
+def rule_hot_cold_partition(accesses, var_misses, structs, field_heat, cache_line, miss_threshold):
     for struct_name, layout in structs.items():
         struct_size = layout.get("size", 0)
-        if struct_size <= 2 * CACHE_LINE:
+        if struct_size <= HOT_COLD_MIN_SIZE_LINES * cache_line:
             continue
 
         heat = field_heat.get(struct_name, {})
@@ -173,9 +200,9 @@ def rule_hot_cold_partition(accesses, var_misses, structs, field_heat):
             continue
 
         hot = [f for f in layout["fields"]
-               if heat.get(f["name"], 0) > MISS_THRESHOLD]
+               if heat.get(f["name"], 0) > miss_threshold]
         cold = [f for f in layout["fields"]
-                if heat.get(f["name"], 0) <= MISS_THRESHOLD]
+                if heat.get(f["name"], 0) <= miss_threshold]
 
         if not hot or not cold:
             continue
@@ -183,7 +210,7 @@ def rule_hot_cold_partition(accesses, var_misses, structs, field_heat):
         hot_size = sum(f["size"] for f in hot)
         cold_size = sum(f["size"] for f in cold)
 
-        if hot_size <= CACHE_LINE and cold_size > CACHE_LINE:
+        if hot_size <= cache_line and cold_size > cache_line:
             yield {
                 "severity": "MEDIUM",
                 "pattern": "hot_cold_partition",
@@ -210,7 +237,7 @@ def rule_hot_cold_partition(accesses, var_misses, structs, field_heat):
 
 
 # Rule 5: column-major / strided traversal of row-major arrays
-def rule_strided_access(accesses, var_misses):
+def rule_strided_access(accesses, var_misses, miss_threshold):
     seen = set()
     for acc in accesses:
         if acc["kind"] != "strided":
@@ -221,7 +248,7 @@ def rule_strided_access(accesses, var_misses):
             continue
 
         misses = get_misses(var_misses, var)
-        if misses > MISS_THRESHOLD:
+        if misses > miss_threshold:
             seen.add(var)
             yield {
                 "severity": "HIGH",
@@ -242,7 +269,7 @@ def rule_strided_access(accesses, var_misses):
 
 
 # Rule 6: indirect / random access via index array
-def rule_random_access(accesses, var_misses):
+def rule_random_access(accesses, var_misses, miss_threshold):
     seen = set()
     for acc in accesses:
         if acc["kind"] not in ("indirect_array", "indirect_vector"):
@@ -255,7 +282,7 @@ def rule_random_access(accesses, var_misses):
             continue
 
         misses = get_misses(var_misses, var)
-        if misses > MISS_THRESHOLD:
+        if misses > miss_threshold:
             seen.add(var)
             yield {
                 "severity": "HIGH",
@@ -312,6 +339,10 @@ def main():
     parser.add_argument("perf_file", help="path to perf_cache_lines.json")
     parser.add_argument("--json", action="store_true",
                         help="output machine-readable JSON instead of text")
+    parser.add_argument("--cache-line", type=int, default=None,
+                        help="cache line size in bytes (default: auto-detect from system)")
+    parser.add_argument("--miss-threshold", type=int, default=None,
+                        help="minimum cache misses to flag a variable (default: 5%% of max)")
     args = parser.parse_args()
 
     with open(args.ast_file) as f:
@@ -323,6 +354,9 @@ def main():
     with open(args.perf_file) as f:
         perf_data = json.load(f)
 
+    cache_line = args.cache_line if args.cache_line is not None else detect_cache_line()
+    miss_threshold = args.miss_threshold if args.miss_threshold is not None else compute_miss_threshold(var_misses)
+
     # Convert string line keys to ints
     hot_lines = {int(k): v for k, v in perf_data.items()}
 
@@ -331,12 +365,12 @@ def main():
     field_heat = compute_field_heat(accesses, var_misses, hot_lines)
 
     recommendations = []
-    recommendations.extend(rule_pointer_chasing(accesses, var_misses))
-    recommendations.extend(rule_aos_to_soa(accesses, var_misses, structs, field_heat))
-    recommendations.extend(rule_struct_reorder(accesses, var_misses, structs, field_heat))
-    recommendations.extend(rule_hot_cold_partition(accesses, var_misses, structs, field_heat))
-    recommendations.extend(rule_strided_access(accesses, var_misses))
-    recommendations.extend(rule_random_access(accesses, var_misses))
+    recommendations.extend(rule_pointer_chasing(accesses, var_misses, miss_threshold))
+    recommendations.extend(rule_aos_to_soa(accesses, var_misses, structs, field_heat, miss_threshold))
+    recommendations.extend(rule_struct_reorder(accesses, var_misses, structs, field_heat, cache_line, miss_threshold))
+    recommendations.extend(rule_hot_cold_partition(accesses, var_misses, structs, field_heat, cache_line, miss_threshold))
+    recommendations.extend(rule_strided_access(accesses, var_misses, miss_threshold))
+    recommendations.extend(rule_random_access(accesses, var_misses, miss_threshold))
 
     severity_order = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
     recommendations.sort(key=lambda r: severity_order.get(r["severity"], 99))
