@@ -17,8 +17,6 @@ target_include_directories(ast_analyzer PRIVATE
 add_definitions(${LLVM_DEFINITIONS})
 
 target_link_libraries(ast_analyzer
-    clangTooling
-    clangFrontend
-    clangAST
+    clang-cpp
     LLVMSupport
 )
