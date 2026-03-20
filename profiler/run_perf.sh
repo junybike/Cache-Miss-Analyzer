@@ -37,7 +37,8 @@ python3 analysis/parser.py "$BINARY" "$DATA_DIR/perf_script.txt" --source "$SOUR
     > "$RESULT_DIR/perf_cache_lines.json"
 
 echo "Running AST analyzer..."
-./analysis/build/ast_analyzer "$SOURCE" -- > "$AST_DIR/ast_accesses.json"
+GCC_INCLUDE=$(gcc -print-file-name=include 2>/dev/null)
+./analysis/build/ast_analyzer "$SOURCE" -- ${GCC_INCLUDE:+-isystem "$GCC_INCLUDE"} > "$AST_DIR/ast_accesses.json"
 
 echo "Correlating data..."
 python3 analysis/analyze.py \
