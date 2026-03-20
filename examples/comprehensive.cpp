@@ -117,7 +117,7 @@ int main()
 
     std::cout << "elevation sum: " << elevation_sum << std::endl;
 
-    // === 3. AoS waste: hot loop reads two fields from a 96-byte struct ===
+    // === 3. AoS waste: hot loop reads two fields from a 92-byte struct ===
 
     const int N_PROJECTILES = 3000000;
     std::vector<Projectile> projectiles(N_PROJECTILES);

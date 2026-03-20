@@ -56,7 +56,8 @@ struct StructRecord
     std::vector<FieldRecord> fields;
 };
 
-// Walks through AST nodes
+// Traverses the AST to extract struct layouts, variable access patterns,
+// loop context, and pointer-advance chains for cache-miss analysis.
 class AccessVisitor : public RecursiveASTVisitor<AccessVisitor>
 {
 public:
@@ -69,7 +70,6 @@ public:
     std::map<std::string, int> LoopVarDepth;
     std::set<unsigned> RecordedArrayLines;
 
-    // Stores AST context
     AccessVisitor(ASTContext *context) : Context(context) {}
 
     // Extracts struct/class layout: field names, types, sizes, byte offsets
@@ -443,7 +443,7 @@ public:
     }
 };
 
-// The entry point for AST traversal
+// Runs the visitor once the translation unit is fully parsed
 class AccessConsumer : public ASTConsumer
 {
 public:
@@ -456,7 +456,7 @@ public:
     }
 };
 
-// Connects Clang
+// Frontend action factory that creates the AccessConsumer for each source file
 class AccessAction : public ASTFrontendAction
 {
 public:
@@ -488,6 +488,5 @@ int main(int argc, const char **argv)
     tooling::CommonOptionsParser& OptionsParser = parser.get();
     tooling::ClangTool tool(OptionsParser.getCompilations(), OptionsParser.getSourcePathList());
 
-    // Begin AST analysis
     return tool.run(tooling::newFrontendActionFactory<AccessAction>().get());
 }

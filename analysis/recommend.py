@@ -1,16 +1,24 @@
 import json, argparse, subprocess
 from collections import defaultdict
 
+# A field is "hot" if its misses exceed this fraction of the hottest field
 FIELD_HEAT_RATIO = 0.2
+# AoS rule fires when this fraction of struct fields are unused in the hot loop
 AOS_WASTE_THRESHOLD = 0.4
+# Struct needs at least this many fields before AoS→SoA is worth suggesting
 MIN_FIELDS_AOS = 2
-HOT_COLD_MIN_SIZE_LINES = 2  # multiplied by cache_line at runtime
-MISS_THRESHOLD_RATIO = 0.05  # fraction of max misses used as adaptive threshold
+# Struct must span this many cache lines to consider a hot/cold split
+HOT_COLD_MIN_SIZE_LINES = 2
+# Absolute floor: ignore variables with fewer misses than this
+MISS_FLOOR = 50
+# Variable must cause at least this fraction of total misses to be flagged
+MISS_RATIO_OF_TOTAL = 0.02
+# Fallback L1 data cache line size when getconf auto-detection fails
 DEFAULT_CACHE_LINE = 64
 
 
 def detect_cache_line():
-    """Query the system for L1 data cache line size, fall back to 64."""
+    """Query the system for L1 data cache line size"""
     try:
         result = subprocess.run(
             ["getconf", "LEVEL1_DCACHE_LINESIZE"],
@@ -25,11 +33,14 @@ def detect_cache_line():
 
 
 def compute_miss_threshold(var_misses):
-    """Adaptive threshold: fraction of the highest miss count across all variables."""
+    """Adaptive threshold: absolute floor or percentage of total misses, whichever is larger.
+
+    Using total misses (not max) prevents a single dominant variable from
+    pushing the threshold up and masking other significant issues."""
     if not var_misses:
         return 0
-    max_misses = max(v.get("misses", 0) for v in var_misses.values())
-    return int(max_misses * MISS_THRESHOLD_RATIO)
+    total_misses = sum(v.get("misses", 0) for v in var_misses.values())
+    return max(MISS_FLOOR, int(total_misses * MISS_RATIO_OF_TOTAL))
 
 
 def get_misses(var_misses, var):
@@ -342,7 +353,7 @@ def main():
     parser.add_argument("--cache-line", type=int, default=None,
                         help="cache line size in bytes (default: auto-detect from system)")
     parser.add_argument("--miss-threshold", type=int, default=None,
-                        help="minimum cache misses to flag a variable (default: 5%% of max)")
+                        help="minimum cache misses to flag a variable (default: max(50, 2%% of total))")
     args = parser.parse_args()
 
     with open(args.ast_file) as f:

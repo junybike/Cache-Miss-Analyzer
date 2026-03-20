@@ -1,3 +1,12 @@
 .vscode
 *.old
-build
+build/
+
+# Compiled example binaries
+examples/*
+!examples/*.cpp
+benchmarks/*
+!benchmarks/*.cpp
+
+# Generated data
+data/

@@ -1,2 +1,0 @@
-=== Cache Misses by Variable ===
-v_int: 175

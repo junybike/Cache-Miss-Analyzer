@@ -5,11 +5,13 @@ Identifies which C++ variables cause the most CPU cache misses by combining Clan
 ## How It Works
 
 ```
-perf record ──► parser.py ──► ast_analyzer ──► analyze.py ──► recommend.py
- (samples)    (addr→line)    (AST→JSON)     (correlate)    (pattern match)
+perf record ──► parser.py ──────┐
+ (samples)    (addr→line)       ├──► analyze.py ──► recommend.py
+source.cpp ──► ast_analyzer ────┘   (correlate)    (pattern match)
+               (AST→JSON)
 ```
 
-Each stage reads and writes JSON. Human-readable output goes to stderr or tee'd files; structured JSON goes to stdout.
+`parser.py` and `ast_analyzer` run independently — one maps perf samples to source lines, the other extracts struct layouts and access patterns. `analyze.py` correlates them, and `recommend.py` pattern-matches the result into optimization advice. Each stage reads and writes JSON.
 
 ## Dependencies
 
@@ -61,6 +63,10 @@ sudo sysctl kernel.perf_event_paranoid=0
 | AoS to SoA | MEDIUM | Arrays of structs where most fields go unused in hot loops |
 | Hot/cold partition | MEDIUM | Large structs (>128 bytes) where hot fields fit in one cache line but cold fields dominate |
 | Struct reorder | LOW | Hot fields separated by cold fields across cache line boundaries |
+
+## Tuning
+
+`recommend.py` uses an adaptive miss threshold to filter noise: a variable is only flagged when its misses exceed **both** an absolute floor (50 samples) and 2% of total misses across all variables. This prevents a single dominant hot variable from masking other significant issues. Override with `--miss-threshold <N>` to set a fixed value.
 
 ## Running Individual Components
 

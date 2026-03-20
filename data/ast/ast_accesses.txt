@@ -1,9 +1,0 @@
-Line 19: vector access v_int
-Line 25: vector access v_int
-Line 33: array access a_int
-Line 42: struct access n1->next
-Line 43: struct access n2->next
-Line 44: struct access n3->next
-Line 45: struct access n4->next
-Line 51: struct access tmp->data
-Line 52: struct access tmp->next

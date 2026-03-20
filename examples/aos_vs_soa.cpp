@@ -1,4 +1,4 @@
-// AoS waste: hot loop reads only x and y from a 96-byte struct.
+// AoS waste: hot loop reads only x and y from a 92-byte struct.
 
 #include <iostream>
 #include <vector>
