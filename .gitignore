@@ -8,5 +8,9 @@ examples/*
 benchmarks/*
 !benchmarks/*.cpp
 
+# Python bytecode
+__pycache__/
+*.pyc
+
 # Generated data
 data/
