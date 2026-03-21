@@ -31,7 +31,7 @@ Waypoint *build_path(int n)
     Waypoint *head = nullptr;
     for (int i = 0; i < n; i++)
     {
-        // Push allocations far apart to defeat allocator locality
+        // Intentionally leaked to prevent allocator reuse and scatter nodes
         volatile char *spacer = new char[4096];
         (void)spacer;
 

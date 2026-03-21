@@ -13,8 +13,17 @@ def main():
     with open(args.ast_file) as f:
         ast_data = json.load(f)
 
+    if "accesses" not in ast_data:
+        print("Error: AST JSON missing 'accesses' key", file=sys.stderr)
+        sys.exit(1)
+    if "structs" not in ast_data:
+        print("Warning: AST JSON missing 'structs' key", file=sys.stderr)
+
     with open(args.perf_file) as f:
         perf_data = json.load(f)
+
+    if not perf_data:
+        print("Warning: perf data is empty — profiling may have failed", file=sys.stderr)
 
     # Map source lines to the AST accesses on that line
     line_to_vars = defaultdict(list)
@@ -34,7 +43,7 @@ def main():
             is_struct = acc["kind"] in ("struct_member", "aos_member")
 
             if var not in var_info:
-                var_info[var] = {"misses": 0, "kind": acc["kind"]}
+                var_info[var] = {"misses": 0, "kinds": set()}
                 if acc.get("element_type"):
                     var_info[var]["element_type"] = acc["element_type"]
                 if acc.get("struct_type"):
@@ -44,6 +53,7 @@ def main():
                     var_info[var]["has_ptr_advance"] = False
 
             var_info[var]["misses"] += count
+            var_info[var]["kinds"].add(acc["kind"])
 
             if is_struct:
                 if acc.get("field"):
@@ -53,6 +63,7 @@ def main():
 
     # Sets aren't JSON-serializable
     for info in var_info.values():
+        info["kinds"] = sorted(info["kinds"])
         if "fields_accessed" in info:
             info["fields_accessed"] = sorted(info["fields_accessed"])
 

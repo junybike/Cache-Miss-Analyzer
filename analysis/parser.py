@@ -1,4 +1,4 @@
-import re, subprocess, argparse, os, json
+import re, subprocess, argparse, os, json, sys
 from collections import defaultdict
 
 
@@ -33,17 +33,25 @@ def main():
     # Falling back to binary_name works when the two share a name.
     source_name = os.path.basename(args.source) if args.source else binary_name
 
-    # Count how many cache-miss samples landed on each instruction address
+    # Count how many cache-miss samples landed on each instruction address.
+    # The parenthesis check filters for stack frame lines in perf script output.
     address_counts = defaultdict(int)
     with open(args.perf_script) as f:
         for line in f:
             m = re.match(r'\s*([0-9a-f]+)\s', line)
-            if m and "(" in line and binary_name in line:
+            if m and "(" in line and (f"/{binary_name}" in line or f"({binary_name})" in line):
                 address_counts[m.group(1)] += 1
 
     # Resolve addresses to source lines, then aggregate by line number
     addresses = list(address_counts.keys())
+    if not addresses:
+        print("{}")
+        return
+
     resolved = addr_to_line(args.binary, addresses)
+    if len(resolved) != len(addresses):
+        print(f"Warning: addr2line returned {len(resolved)} lines for "
+              f"{len(addresses)} addresses", file=sys.stderr)
 
     line_counts = defaultdict(int)
     for addr, resolved_line in zip(addresses, resolved):

@@ -62,14 +62,14 @@ def compute_field_heat(accesses, var_misses, hot_lines):
             if acc["line"] in hot_lines:
                 line_field_count[acc["line"]] += 1
 
-    heat = defaultdict(lambda: defaultdict(int))
+    heat = defaultdict(lambda: defaultdict(float))
     for acc in accesses:
         if acc["kind"] in ("struct_member", "aos_member") and acc.get("field"):
             if acc["line"] not in hot_lines:
                 continue
             line_misses = hot_lines[acc["line"]]
             share = line_field_count[acc["line"]]
-            heat[acc.get("struct_type", "")][acc["field"]] += line_misses // share
+            heat[acc.get("struct_type", "")][acc["field"]] += line_misses / share
     return heat
 
 
@@ -127,6 +127,10 @@ def rule_aos_to_soa(accesses, var_misses, structs, field_heat, miss_threshold):
         # hottest field. Using 20% of max (not total) so that init-loop
         # noise doesn't inflate the count, while cache-adjacent fields
         # (fewer samples due to shared cache lines) are still included.
+        #
+        # Two thresholds: total_heat filters structs with negligible aggregate
+        # misses; per-variable misses (below) filters variables that aren't
+        # individually significant.
         total_heat = sum(heat.values())
         if total_heat <= miss_threshold:
             continue
@@ -135,7 +139,12 @@ def rule_aos_to_soa(accesses, var_misses, structs, field_heat, miss_threshold):
         hot_fields = {f for f in all_fields if heat.get(f, 0) > max_heat * FIELD_HEAT_RATIO}
         cold_fields = all_fields - hot_fields
 
-        waste = 1 - len(hot_fields) / len(all_fields)
+        # Byte-weighted waste: a struct with 3 hot 4-byte fields and 1 cold
+        # 256-byte field should show high waste, not 25% by field count.
+        field_sizes = {f["name"]: f["size"] for f in structs[struct_type]["fields"]}
+        hot_bytes = sum(field_sizes.get(f, 0) for f in hot_fields)
+        total_bytes = sum(field_sizes.values())
+        waste = 1 - hot_bytes / total_bytes if total_bytes > 0 else 0
         misses = get_misses(var_misses, var)
 
         if waste > AOS_WASTE_THRESHOLD and misses > miss_threshold:
@@ -184,9 +193,8 @@ def rule_struct_reorder(accesses, var_misses, structs, field_heat, cache_line, m
                 "struct_type": struct_name,
                 "hot_fields": [f["name"] for f in hot],
                 "cold_fields": cold,
-                "struct_size": layout["fields"][-1]["offset"] + layout["fields"][-1]["size"]
-                               if layout["fields"] else 0,
-                "cache_misses": sum(heat.get(f["name"], 0) for f in hot),
+                "struct_size": layout.get("size", 0),
+                "cache_misses": round(sum(heat.get(f["name"], 0) for f in hot)),
                 "problem": (
                     f"Hot fields ({', '.join(f['name'] for f in hot)}) "
                     f"are separated by cold fields, spanning {span} bytes "
@@ -231,7 +239,7 @@ def rule_hot_cold_partition(accesses, var_misses, structs, field_heat, cache_lin
                 "struct_size": struct_size,
                 "hot_size": hot_size,
                 "cold_size": cold_size,
-                "cache_misses": sum(heat.get(f["name"], 0) for f in hot),
+                "cache_misses": round(sum(heat.get(f["name"], 0) for f in hot)),
                 "problem": (
                     f"struct {struct_name} is {struct_size} bytes but only "
                     f"{hot_size} bytes ({', '.join(f['name'] for f in hot)}) "
@@ -350,6 +358,8 @@ def main():
     parser.add_argument("perf_file", help="path to perf_cache_lines.json")
     parser.add_argument("--json", action="store_true",
                         help="output machine-readable JSON instead of text")
+    parser.add_argument("--json-output", metavar="FILE", default=None,
+                        help="also write JSON output to FILE (alongside text on stdout)")
     parser.add_argument("--cache-line", type=int, default=None,
                         help="cache line size in bytes (default: auto-detect from system)")
     parser.add_argument("--miss-threshold", type=int, default=None,
@@ -390,6 +400,11 @@ def main():
         print(json.dumps({"recommendations": recommendations}, indent=2))
     else:
         print_recommendations(recommendations)
+
+    if args.json_output:
+        with open(args.json_output, "w") as f:
+            json.dump({"recommendations": recommendations}, f, indent=2)
+            f.write("\n")
 
 
 if __name__ == "__main__":

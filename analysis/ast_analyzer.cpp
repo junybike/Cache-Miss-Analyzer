@@ -68,7 +68,7 @@ public:
     std::map<std::string, StructRecord> Structs;
     std::set<std::pair<unsigned, std::string>> PtrAdvances;
     std::map<std::string, int> LoopVarDepth;
-    std::set<unsigned> RecordedArrayLines;
+    std::set<unsigned> Visited2DLines;
 
     AccessVisitor(ASTContext *context) : Context(context) {}
 
@@ -190,6 +190,8 @@ public:
         auto *rhsDRE = dyn_cast<DeclRefExpr>(rhsBase);
         if (!rhsDRE) return true;
 
+        // Compare by name — could false-positive on same-named variables in
+        // different scopes on the same line, but this is unlikely in practice.
         if (lhsDRE->getNameInfo().getAsString() == rhsDRE->getNameInfo().getAsString())
         {
             PtrAdvances.insert({line, lhsDRE->getNameInfo().getAsString()});
@@ -209,8 +211,9 @@ public:
 
         unsigned line = SM.getSpellingLineNumber(SL);
 
-        // Skip if this line was already recorded by an outer 2D subscript
-        if (RecordedArrayLines.count(line)) return true;
+        // Skip if this line was already recorded by an outer 2D subscript,
+        // preventing double-counting of nested array accesses (e.g. arr[r][c])
+        if (Visited2DLines.count(line)) return true;
 
         Expr *base = unwrapExpr(expr->getBase());
 
@@ -233,7 +236,7 @@ public:
                     if (rowIt != LoopVarDepth.end() && colIt != LoopVarDepth.end()
                         && rowIt->second > colIt->second)
                     {
-                        RecordedArrayLines.insert(line);
+                        Visited2DLines.insert(line);
                         AccessRecord rec;
                         rec.line = line;
                         rec.kind = "strided";
@@ -254,7 +257,7 @@ public:
                 rec.element_type = expr->getType().getAsString();
                 rec.in_loop = (LoopDepth > 0);
                 rec.is_ptr_advance = false;
-                RecordedArrayLines.insert(line);
+                Visited2DLines.insert(line);
                 Accesses.push_back(rec);
                 return true;
             }

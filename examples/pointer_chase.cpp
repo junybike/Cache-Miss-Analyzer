@@ -14,7 +14,7 @@ Node* build_list(int n)
     Node *head = nullptr;
     for (int i = 0; i < n; i++)
     {
-        // Padding between nodes to defeat allocator locality
+        // Intentionally leaked to prevent allocator reuse and scatter nodes
         volatile char *pad = new char[4096];
         (void)pad;
 
