@@ -13,6 +13,33 @@ fi
 SOURCE=$1
 BINARY=$2
 
+LLM="claude"
+MODE="instruction"
+API_KEY=""
+
+# Gets LLM, mode, api-key
+shift 2
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --llm)
+            LLM="$2"
+            shift 2
+            ;;
+        --mode)
+            MODE="$2"
+            shift 2
+            ;;
+        --api-key)
+            API_KEY="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
+
 if [ ! -f "$SOURCE" ]; then
     echo "Error: source file '$SOURCE' not found"
     exit 1
@@ -74,3 +101,12 @@ python3 "$PROJECT_DIR/analysis/recommend.py" \
     "$RESULT_DIR/perf_cache_lines.json" \
     --json-output "$RESULT_DIR/recommendations.json" \
     | tee "$RESULT_DIR/recommendations.txt"
+
+echo ""
+echo "Running LLM optimization..."
+python3 "$PROJECT_DIR/analysis/llm_integration.py" \
+    "$RESULT_DIR/recommendations.json" \
+    "$SOURCE" \
+    --llm "$LLM" \
+    --mode "$MODE" \
+    ${API_KEY:+--api-key "$API_KEY"}

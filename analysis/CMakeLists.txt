@@ -4,6 +4,8 @@ project(ast_analyzer)
 find_package(LLVM REQUIRED CONFIG)
 find_package(Clang REQUIRED CONFIG)
 
+set(LLVM_LINK_LLVM_DYLIB ON)
+
 message(STATUS "LLVM include dirs: ${LLVM_INCLUDE_DIRS}")
 message(STATUS "Clang include dirs: ${CLANG_INCLUDE_DIRS}")
 
@@ -18,5 +20,5 @@ add_definitions(${LLVM_DEFINITIONS})
 
 target_link_libraries(ast_analyzer
     clang-cpp
-    LLVMSupport
+    LLVM
 )
