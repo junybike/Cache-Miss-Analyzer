@@ -193,9 +193,17 @@ def main():
         print("No recommendations found.")
         return
     
+    api_key = args.api_key or os.environ.get("ANTHROPIC_API_KEY")
+
     if args.mode == "instruction":
         mode_instruction(recs)
-    elif args.mode == "edit":
+        exit(1)
+    
+    if not api_key:
+        print("Error: no API key provided")
+        exit(1)
+
+    if args.mode == "edit":
         mode_edit(args.source, recs, args.llm, args.api_key)
     elif args.mode == "copy":
         mode_copy(args.source, recs, args.llm, args.api_key)
