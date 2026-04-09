@@ -1,9 +1,6 @@
 import json, argparse, os
 from typing import List
 
-from openai import OpenAI
-import anthropic
-import google.generativeai as genai
 
 
 # Builds the prompt which will get forwarded to an llm
@@ -52,8 +49,9 @@ Optimize the following code based on a cache optimization issue.
 """ 
 
 
-# Makes call (LLM: chatgpt) 
+# Makes call (LLM: chatgpt)
 def chatgpt(prompt: str, api_key: str) -> str:
+    from openai import OpenAI
     client = OpenAI(api_key=api_key)
     response = client.chat.completions.create(
         model="gpt-4.1",
@@ -68,6 +66,7 @@ def chatgpt(prompt: str, api_key: str) -> str:
 
 # Makes call (LLM: claude)
 def claude(prompt: str, api_key: str) -> str:
+    import anthropic
     client = anthropic.Anthropic(api_key=api_key)
     response = client.messages.create(
         model="claude-3-5-sonnet-20241022",
@@ -82,6 +81,7 @@ def claude(prompt: str, api_key: str) -> str:
 
 # Makes call (LLM: gemini)
 def gemini(prompt: str, api_key: str) -> str:
+    import google.generativeai as genai
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel("gemini-1.5-pro")
     response = model.generate_content(prompt)
@@ -152,13 +152,13 @@ def mode_instruction(recs: List[dict]):
 
 
 # Output mode: generate a copy
-def mode_copy(source_path: str, recs: List[dict], llm: str, api_key: str):
+def mode_copy(source_path: str, recs: List[dict], llm: str, api_key: str, output_path: str = None):
     new_code = apply_recommendations(source_path, recs, llm, api_key)
-    new_path = source_path.replace(".cpp", "_optimized.cpp")
+    new_path = output_path or source_path.replace(".cpp", "_optimized.cpp")
 
     with open(new_path, "w") as file:
         file.write(new_code)
-    
+
     print(f"Optimized copy written to {new_path}")
 
 
@@ -181,6 +181,7 @@ def main():
     parser.add_argument("--llm", choices=["claude", "chatgpt", "gemini"], default="claude")
     parser.add_argument("--mode", choices=["instruction", "edit", "copy"], default="instruction")
     parser.add_argument("--api-key", help="API key for the selected LLM")
+    parser.add_argument("--output", help="Output path for copy mode (default: <source>_optimized.cpp)")
 
     args = parser.parse_args()
 
@@ -197,16 +198,16 @@ def main():
 
     if args.mode == "instruction":
         mode_instruction(recs)
-        exit(1)
-    
+        return
+
     if not api_key:
         print("Error: no API key provided")
         exit(1)
 
     if args.mode == "edit":
-        mode_edit(args.source, recs, args.llm, args.api_key)
+        mode_edit(args.source, recs, args.llm, api_key)
     elif args.mode == "copy":
-        mode_copy(args.source, recs, args.llm, args.api_key)
+        mode_copy(args.source, recs, args.llm, api_key, args.output)
 
 if __name__ == "__main__":
     main()

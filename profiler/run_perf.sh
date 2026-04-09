@@ -102,11 +102,13 @@ python3 "$PROJECT_DIR/analysis/recommend.py" \
     --json-output "$RESULT_DIR/recommendations.json" \
     | tee "$RESULT_DIR/recommendations.txt"
 
-echo ""
-echo "Running LLM optimization..."
-python3 "$PROJECT_DIR/analysis/llm_integration.py" \
-    "$RESULT_DIR/recommendations.json" \
-    "$SOURCE" \
-    --llm "$LLM" \
-    --mode "$MODE" \
-    ${API_KEY:+--api-key "$API_KEY"}
+if [ "$MODE" != "instruction" ]; then
+    echo ""
+    echo "Running LLM optimization..."
+    python3 "$PROJECT_DIR/analysis/llm_integration.py" \
+        "$RESULT_DIR/recommendations.json" \
+        "$SOURCE" \
+        --llm "$LLM" \
+        --mode "$MODE" \
+        ${API_KEY:+--api-key "$API_KEY"}
+fi
