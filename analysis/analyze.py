@@ -1,78 +1,85 @@
-import json, sys, argparse
+"""Correlate AST variable accesses with perf cache-miss data.
+
+Each line with a nonzero miss count credits its full count to every
+variable accessed on that line. This is a simple model — a single line
+with N variable accesses contributes to all N variables.
+"""
+
+import argparse
+import json
+import sys
 from collections import defaultdict
+
+from rules.common import STRUCT_KINDS
+
+
+def var_key(a):
+    """Scope variable names by function to prevent false merging of common
+    names like 'i' or 'data' across different functions."""
+    fn = a.get("function", "")
+    return f"{fn}::{a['var']}" if fn else a["var"]
+
+
+def correlate(accesses, perf_data):
+    by_line = defaultdict(list)
+    for a in accesses:
+        by_line[a["line"]].append(a)
+
+    info = {}
+    for line_str, count in perf_data.items():
+        for a in by_line.get(int(line_str), []):
+            key = var_key(a)
+            v = info.setdefault(key, {"misses": 0, "kinds": set()})
+            v["misses"] += count
+            v["kinds"].add(a["kind"])
+
+            if a.get("element_type"):
+                v.setdefault("element_type", a["element_type"])
+            if a.get("struct_type"):
+                v.setdefault("struct_type", a["struct_type"])
+
+            if a["kind"] in STRUCT_KINDS:
+                v.setdefault("fields_accessed", set())
+                v.setdefault("has_ptr_advance", False)
+                if a.get("field"):
+                    v["fields_accessed"].add(a["field"])
+                if a.get("is_ptr_advance"):
+                    v["has_ptr_advance"] = True
+    return info
+
+
+def finalize_sets(info):
+    """Convert the in-place set fields to sorted lists so the dict is
+    JSON-serializable. Mutates and returns info."""
+    for v in info.values():
+        v["kinds"] = sorted(v["kinds"])
+        if "fields_accessed" in v:
+            v["fields_accessed"] = sorted(v["fields_accessed"])
+    return info
 
 
 def main():
-    arg_parser = argparse.ArgumentParser(
-        description="Correlate AST variable accesses with perf cache-miss data."
-    )
-    arg_parser.add_argument("ast_file", help="path to ast_accesses.json")
-    arg_parser.add_argument("perf_file", help="path to perf_cache_lines.json")
-    args = arg_parser.parse_args()
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("ast_file")
+    ap.add_argument("perf_file")
+    args = ap.parse_args()
 
     with open(args.ast_file) as f:
         ast_data = json.load(f)
-
-    if "accesses" not in ast_data:
-        print("Error: AST JSON missing 'accesses' key", file=sys.stderr)
-        sys.exit(1)
-    if "structs" not in ast_data:
-        print("Warning: AST JSON missing 'structs' key", file=sys.stderr)
-
     with open(args.perf_file) as f:
         perf_data = json.load(f)
 
     if not perf_data:
-        print("Warning: perf data is empty — profiling may have failed", file=sys.stderr)
+        print("Warning: perf data is empty — profiling may have failed",
+              file=sys.stderr)
 
-    # Map source lines to the AST accesses on that line
-    line_to_vars = defaultdict(list)
-    for acc in ast_data["accesses"]:
-        line_to_vars[acc["line"]].append(acc)
+    info = finalize_sets(correlate(ast_data.get("accesses", []), perf_data))
 
-    # Correlate perf miss counts with AST variable info
-    var_info = {}
-
-    for line_str, count in perf_data.items():
-        line_number = int(line_str)
-        if line_number not in line_to_vars:
-            continue
-
-        for acc in line_to_vars[line_number]:
-            var = acc["var"]
-            is_struct = acc["kind"] in ("struct_member", "aos_member")
-
-            if var not in var_info:
-                var_info[var] = {"misses": 0, "kinds": set()}
-                if acc.get("element_type"):
-                    var_info[var]["element_type"] = acc["element_type"]
-                if acc.get("struct_type"):
-                    var_info[var]["struct_type"] = acc["struct_type"]
-                if is_struct:
-                    var_info[var]["fields_accessed"] = set()
-                    var_info[var]["has_ptr_advance"] = False
-
-            var_info[var]["misses"] += count
-            var_info[var]["kinds"].add(acc["kind"])
-
-            if is_struct:
-                if acc.get("field"):
-                    var_info[var]["fields_accessed"].add(acc["field"])
-                if acc.get("is_ptr_advance"):
-                    var_info[var]["has_ptr_advance"] = True
-
-    # Sets aren't JSON-serializable
-    for info in var_info.values():
-        info["kinds"] = sorted(info["kinds"])
-        if "fields_accessed" in info:
-            info["fields_accessed"] = sorted(info["fields_accessed"])
-
-    # Human-readable summary on stderr, JSON on stdout
     print("=== Cache Misses by Variable ===", file=sys.stderr)
-    for var, info in sorted(var_info.items(), key=lambda x: -x[1]["misses"]):
-        print(f"{var}: {info['misses']}", file=sys.stderr)
+    for var, v in sorted(info.items(), key=lambda kv: -kv[1]["misses"]):
+        print(f"{var}: {v['misses']}", file=sys.stderr)
 
-    print(json.dumps(var_info, indent=2))
+    print(json.dumps(info, indent=2))
 
 
 if __name__ == "__main__":

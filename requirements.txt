@@ -1,0 +1,11 @@
+# Install all: pip install -r requirements.txt
+# Or let run.py install only the LLM you're using via --llm
+
+# Claude
+anthropic
+
+# ChatGPT
+openai
+
+# Gemini
+google-generativeai

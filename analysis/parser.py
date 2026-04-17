@@ -1,70 +1,82 @@
-import re, subprocess, argparse, os, json, sys
+"""Map perf cache-miss sample addresses to source line numbers."""
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
 from collections import defaultdict
+
+ADDR = re.compile(r"\s*([0-9a-f]+)\s")
+LINE = re.compile(r":(\d+)(?:\s|$)")
+DISCRIMINATOR = re.compile(r"\s*\(discriminator.*\)")
 
 
 def addr_to_line(binary, addresses):
-    """Batch-convert instruction addresses to source lines via addr2line."""
-    input_data = "\n".join("0x" + a for a in addresses)
-    result = subprocess.run(
+    """Batch addr2line. Fails loudly if the tool errors out."""
+    r = subprocess.run(
         ["addr2line", "-e", binary, "-f", "-p"],
-        input=input_data,
-        capture_output=True,
-        text=True
+        input="\n".join("0x" + a for a in addresses),
+        capture_output=True, text=True,
     )
-    return result.stdout.splitlines()
+    if r.returncode != 0:
+        sys.exit(f"addr2line failed (rc={r.returncode}): {r.stderr.strip()}")
+    return r.stdout.splitlines()
 
 
-def strip_discriminator(line):
-    return re.sub(r'\s*\(discriminator.*\)', '', line)
+def read_sample_counts(perf_script, binary_path):
+    """Count samples per instruction address. Filter by full binary path
+    or perf's parenthesized DSO notation."""
+    binary_name = os.path.basename(binary_path)
+    counts = defaultdict(int)
+    with open(perf_script) as f:
+        for line in f:
+            m = ADDR.match(line)
+            if not m:
+                continue
+            if binary_path in line or f"({binary_name})" in line:
+                counts[m.group(1)] += 1
+    return counts
+
+
+def aggregate_by_line(counts, resolved, source_name):
+    """Sum sample counts per source-line number."""
+    lines = defaultdict(int)
+    for addr, text in zip(counts, resolved):
+        text = DISCRIMINATOR.sub("", text)
+        if text.startswith("??") or source_name not in text:
+            continue
+        m = LINE.search(text)
+        if m:
+            lines[m.group(1)] += counts[addr]
+    return lines
 
 
 def main():
-    arg_parser = argparse.ArgumentParser(
-        description="Map perf cache-miss addresses to source line numbers."
-    )
-    arg_parser.add_argument("binary", help="path to binary")
-    arg_parser.add_argument("perf_script", help="perf script output file")
-    arg_parser.add_argument("--source", help="source file path (for filtering addr2line output)")
-    args = arg_parser.parse_args()
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("binary")
+    ap.add_argument("perf_script", help="perf script output file")
+    ap.add_argument("--source", help="source file (for filtering addr2line output)")
+    args = ap.parse_args()
 
-    binary_name = os.path.basename(args.binary)
-    # Use source basename for addr2line filtering when available, since the
-    # addr2line output contains the source path (not the binary path).
-    # Falling back to binary_name works when the two share a name.
-    source_name = os.path.basename(args.source) if args.source else binary_name
+    binary_path = os.path.realpath(args.binary)
+    source_name = os.path.basename(args.source) if args.source else os.path.basename(binary_path)
 
-    # Count how many cache-miss samples landed on each instruction address.
-    # The parenthesis check filters for stack frame lines in perf script output.
-    address_counts = defaultdict(int)
-    with open(args.perf_script) as f:
-        for line in f:
-            m = re.match(r'\s*([0-9a-f]+)\s', line)
-            if m and "(" in line and (f"/{binary_name}" in line or f"({binary_name})" in line):
-                address_counts[m.group(1)] += 1
-
-    # Resolve addresses to source lines, then aggregate by line number
-    addresses = list(address_counts.keys())
-    if not addresses:
+    counts = read_sample_counts(args.perf_script, binary_path)
+    if not counts:
         print("{}")
         return
 
-    resolved = addr_to_line(args.binary, addresses)
-    if len(resolved) != len(addresses):
-        print(f"Warning: addr2line returned {len(resolved)} lines for "
-              f"{len(addresses)} addresses", file=sys.stderr)
+    addrs = list(counts)
+    resolved = addr_to_line(args.binary, addrs)
+    if len(resolved) < len(addrs):
+        print(f"Warning: addr2line returned {len(resolved)}/{len(addrs)} entries, "
+              f"padding remainder as unresolved", file=sys.stderr)
+        resolved.extend(["??"] * (len(addrs) - len(resolved)))
 
-    line_counts = defaultdict(int)
-    for addr, resolved_line in zip(addresses, resolved):
-        resolved_line = strip_discriminator(resolved_line)
-
-        if resolved_line.startswith("??") or source_name not in resolved_line:
-            continue
-
-        m = re.search(r':(\d+)', resolved_line)
-        if m:
-            line_counts[m.group(1)] += address_counts[addr]
-
-    print(json.dumps(line_counts, indent=2))
+    lines = aggregate_by_line(counts, resolved, source_name)
+    print(json.dumps(lines, indent=2))
 
 
 if __name__ == "__main__":

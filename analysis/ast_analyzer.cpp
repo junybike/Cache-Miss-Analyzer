@@ -1,15 +1,21 @@
-#include <iostream>
-#include <string>
-#include <set>
-#include <vector>
+// Clang tool: scan a C++ translation unit and emit, as JSON:
+//   - struct/class field layouts
+//   - each variable access (arrays, vectors, struct members, AoS members,
+//     pointer advances, strided 2D accesses, indirect/random accesses)
+// The output is consumed downstream to correlate with perf cache-miss data.
+
 #include <map>
+#include <set>
+#include <string>
+#include <unordered_set>
+#include <vector>
 
 #include "clang/AST/ASTConsumer.h"
-#include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/RecordLayout.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Frontend/FrontendAction.h"
-#include "clang/Tooling/Tooling.h"
 #include "clang/Tooling/CommonOptionsParser.h"
+#include "clang/Tooling/Tooling.h"
 
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/JSON.h"
@@ -17,479 +23,459 @@
 
 using namespace clang;
 
-// Unwrap expressions. Filter out implicit casts to see actual variables in the code.
-Expr* unwrapExpr(Expr* expr)
-{
-    while (true)
-    {
-        if (auto *ICE = dyn_cast<ImplicitCastExpr>(expr)) expr = ICE->getSubExpr();
-        else if (auto *MTE = dyn_cast<MaterializeTemporaryExpr>(expr)) expr = MTE->getSubExpr();
-        else break;
-    }
-    return expr;
-}
+namespace {
 
-struct AccessRecord
-{
+struct Access {
     unsigned line;
-    std::string kind;         // "array", "vector", "indirect_array", "indirect_vector",
-                              // "strided", "struct_member", "aos_member"
+    std::string kind;
     std::string var;
+    std::string function;
     std::string element_type;
     std::string struct_type;
     std::string field;
-    bool in_loop;
-    bool is_ptr_advance;
+    std::string index_var;
+    bool in_loop = false;
+    bool is_ptr_advance = false;
 };
 
-struct FieldRecord
-{
-    std::string name;
-    std::string type;
+struct Field {
+    std::string name, type;
+    uint64_t size, offset;
+};
+
+struct Struct {
     uint64_t size;
-    uint64_t offset;
+    std::vector<Field> fields;
 };
 
-struct StructRecord
-{
-    uint64_t size;
-    std::vector<FieldRecord> fields;
-};
+class Visitor : public RecursiveASTVisitor<Visitor> {
+    ASTContext &Ctx;
 
-// Traverses the AST to extract struct layouts, variable access patterns,
-// loop context, and pointer-advance chains for cache-miss analysis.
-class AccessVisitor : public RecursiveASTVisitor<AccessVisitor>
-{
-public:
-
-    ASTContext *Context;
+    std::string CurrentFunction;
     int LoopDepth = 0;
-    std::vector<AccessRecord> Accesses;
-    std::map<std::string, StructRecord> Structs;
+    // Stack of depths per induction-variable name, so shadowing nested loops
+    // (`for (int i ...) { for (int i ...) }`) restores the outer depth on exit
+    // instead of dropping it.
+    std::map<std::string, std::vector<int>> LoopVarDepth;
+
+    // Subexpressions consumed by an enclosing visitor (e.g. the inner
+    // `ArraySubscriptExpr` of `a[r][c]`, or the `operator[]` under
+    // `vec[i].field`). Marked so we don't double-count on re-visit.
+    std::unordered_set<const Expr *> Consumed;
+
+    // (line, resolved name) of every detected `x = x->f` pointer advance.
     std::set<std::pair<unsigned, std::string>> PtrAdvances;
-    std::map<std::string, int> LoopVarDepth;
-    std::set<unsigned> Visited2DLines;
 
-    AccessVisitor(ASTContext *context) : Context(context) {}
+    std::vector<Access> Accesses;
+    std::map<std::string, Struct> Structs;
 
-    // Extracts struct/class layout: field names, types, sizes, byte offsets
-    bool VisitRecordDecl(RecordDecl *RD)
-    {
+public:
+    explicit Visitor(ASTContext &c) : Ctx(c) {}
+
+    // ---- source-location helpers -----------------------------------------
+
+    bool inMainFile(SourceLocation loc) const {
+        auto &SM = Ctx.getSourceManager();
+        loc = SM.getExpansionLoc(loc);
+        return loc.isValid() && SM.isWrittenInMainFile(loc);
+    }
+
+    unsigned lineOf(const Expr *e) const {
+        auto &SM = Ctx.getSourceManager();
+        return SM.getExpansionLineNumber(SM.getExpansionLoc(e->getExprLoc()));
+    }
+
+    // ---- expression resolution -------------------------------------------
+
+    // Walk a base expression down to a readable variable name.
+    //   DRE         -> "p"
+    //   CXXThisExpr -> "this"
+    //   MemberExpr  -> "<base>.<member>"     (e.g. "this.items", "obj.head")
+    //   *p          -> recurse into subexpr
+    // Returns "" when no single variable anchors the expression
+    // (e.g. a CallExpr base like `getList()->head`).
+    std::string resolveVar(const Expr *e) const {
+        e = e->IgnoreParenImpCasts();
+        if (auto *DRE = dyn_cast<DeclRefExpr>(e))
+            return DRE->getNameInfo().getAsString();
+        if (isa<CXXThisExpr>(e))
+            return "this";
+        if (auto *ME = dyn_cast<MemberExpr>(e)) {
+            std::string base = resolveVar(ME->getBase());
+            if (base.empty()) return "";
+            return base + "." + ME->getMemberNameInfo().getAsString();
+        }
+        if (auto *UO = dyn_cast<UnaryOperator>(e))
+            if (UO->getOpcode() == UO_Deref)
+                return resolveVar(UO->getSubExpr());
+        return "";
+    }
+
+    // Identity of the variable anchoring an expression, for equality checks
+    // across scopes (used by the pointer-advance detector).
+    const ValueDecl *resolveDecl(const Expr *e) const {
+        e = e->IgnoreParenImpCasts();
+        if (auto *DRE = dyn_cast<DeclRefExpr>(e)) return DRE->getDecl();
+        if (auto *ME = dyn_cast<MemberExpr>(e))   return ME->getMemberDecl();
+        if (auto *UO = dyn_cast<UnaryOperator>(e))
+            if (UO->getOpcode() == UO_Deref)
+                return resolveDecl(UO->getSubExpr());
+        return nullptr;
+    }
+
+    std::string qualifiedRecord(const RecordDecl *RD) const {
+        if (!RD || RD->getName().empty()) return "";
+        return RD->getQualifiedNameAsString();
+    }
+
+    // Prefer the *static* type of the base expression — captures the derived
+    // class when a base-class member is accessed through a derived object.
+    std::string structTypeOf(const MemberExpr *ME) const {
+        QualType t = ME->getBase()->IgnoreParenImpCasts()->getType();
+        if (t->isPointerType()) t = t->getPointeeType();
+        if (const auto *rt = t->getAs<RecordType>())
+            return qualifiedRecord(rt->getDecl());
+        if (auto *parent = dyn_cast<RecordDecl>(ME->getMemberDecl()->getDeclContext()))
+            return qualifiedRecord(parent);
+        return "";
+    }
+
+    // ---- function tracking -------------------------------------------------
+
+    bool TraverseFunctionDecl(FunctionDecl *FD) {
+        std::string prev = CurrentFunction;
+        CurrentFunction = FD->getQualifiedNameAsString();
+        bool r = RecursiveASTVisitor::TraverseFunctionDecl(FD);
+        CurrentFunction = prev;
+        return r;
+    }
+
+    bool TraverseCXXMethodDecl(CXXMethodDecl *MD) {
+        std::string prev = CurrentFunction;
+        CurrentFunction = MD->getQualifiedNameAsString();
+        bool r = RecursiveASTVisitor::TraverseCXXMethodDecl(MD);
+        CurrentFunction = prev;
+        return r;
+    }
+
+    // ---- loop tracking ---------------------------------------------------
+
+    // Returns the names declared in a for-loop init. Handles both
+    // `for (int i = 0, j = 0; ...)` and `for (i = 0; ...)`.
+    std::vector<std::string> initVars(const Stmt *init) const {
+        std::vector<std::string> v;
+        if (auto *DS = dyn_cast_or_null<DeclStmt>(init)) {
+            for (const Decl *d : DS->decls())
+                if (auto *VD = dyn_cast<VarDecl>(d))
+                    v.push_back(VD->getNameAsString());
+        } else if (auto *BO = dyn_cast_or_null<BinaryOperator>(init)) {
+            if (BO->isAssignmentOp())
+                if (auto *DRE = dyn_cast<DeclRefExpr>(BO->getLHS()->IgnoreParenImpCasts()))
+                    v.push_back(DRE->getNameInfo().getAsString());
+        }
+        return v;
+    }
+
+    bool TraverseForStmt(ForStmt *S) {
+        auto vars = initVars(S->getInit());
+        LoopDepth++;
+        for (auto &v : vars) LoopVarDepth[v].push_back(LoopDepth);
+        bool r = RecursiveASTVisitor::TraverseForStmt(S);
+        for (auto &v : vars) {
+            auto &stk = LoopVarDepth[v];
+            stk.pop_back();
+            if (stk.empty()) LoopVarDepth.erase(v);
+        }
+        LoopDepth--;
+        return r;
+    }
+    bool TraverseWhileStmt(WhileStmt *S) {
+        LoopDepth++;
+        bool r = RecursiveASTVisitor::TraverseWhileStmt(S);
+        LoopDepth--;
+        return r;
+    }
+    bool TraverseDoStmt(DoStmt *S) {
+        LoopDepth++;
+        bool r = RecursiveASTVisitor::TraverseDoStmt(S);
+        LoopDepth--;
+        return r;
+    }
+    bool TraverseCXXForRangeStmt(CXXForRangeStmt *S) {
+        LoopDepth++;
+        bool r = RecursiveASTVisitor::TraverseCXXForRangeStmt(S);
+        LoopDepth--;
+        return r;
+    }
+
+    int depthOf(const std::string &var) const {
+        auto it = LoopVarDepth.find(var);
+        return (it == LoopVarDepth.end() || it->second.empty())
+                   ? -1 : it->second.back();
+    }
+
+    // ---- record layouts --------------------------------------------------
+
+    void collectFields(const RecordDecl *RD, const ASTRecordLayout &layout,
+                        std::vector<Field> &out) {
+        for (auto *f : RD->fields()) {
+            if (f->isAnonymousStructOrUnion()) {
+                if (auto *inner = f->getType()->getAsRecordDecl())
+                    if (inner->isCompleteDefinition())
+                        collectFields(inner, Ctx.getASTRecordLayout(inner), out);
+                continue;
+            }
+            out.push_back({
+                f->getNameAsString(),
+                f->getType().getAsString(),
+                static_cast<uint64_t>(Ctx.getTypeSizeInChars(f->getType()).getQuantity()),
+                layout.getFieldOffset(f->getFieldIndex()) / 8,
+            });
+        }
+    }
+
+    bool VisitRecordDecl(RecordDecl *RD) {
         if (!RD->isCompleteDefinition()) return true;
+        if (!inMainFile(RD->getLocation())) return true;
 
-        SourceManager &SM = Context->getSourceManager();
-        if (!SM.isWrittenInMainFile(RD->getLocation())) return true;
-
-        std::string name = RD->getNameAsString();
+        std::string name = qualifiedRecord(RD);
         if (name.empty()) return true;
 
-        const ASTRecordLayout &Layout = Context->getASTRecordLayout(RD);
-        StructRecord sr;
-        sr.size = Layout.getSize().getQuantity();
-
-        for (auto *field : RD->fields())
-        {
-            FieldRecord fr;
-            fr.name = field->getNameAsString();
-            fr.type = field->getType().getAsString();
-            fr.size = Context->getTypeSizeInChars(field->getType()).getQuantity();
-            fr.offset = Layout.getFieldOffset(field->getFieldIndex()) / 8;
-            sr.fields.push_back(fr);
-        }
-
-        Structs[name] = sr;
+        const ASTRecordLayout &layout = Ctx.getASTRecordLayout(RD);
+        Struct sr;
+        sr.size = layout.getSize().getQuantity();
+        collectFields(RD, layout, sr.fields);
+        Structs[name] = std::move(sr);
         return true;
     }
 
-    // Extract the induction variable from a for-loop's init statement
-    std::string extractLoopVar(ForStmt *S)
-    {
-        Stmt *init = S->getInit();
-        if (!init) return "";
-
-        // for (int i = 0; ...)
-        if (auto *DS = dyn_cast<DeclStmt>(init))
-        {
-            if (DS->isSingleDecl())
-                if (auto *VD = dyn_cast<VarDecl>(DS->getSingleDecl()))
-                    return VD->getNameAsString();
-        }
-        // for (i = 0; ...)
-        else if (auto *BO = dyn_cast<BinaryOperator>(init))
-        {
-            if (BO->isAssignmentOp())
-            {
-                Expr *lhs = unwrapExpr(BO->getLHS());
-                if (auto *DRE = dyn_cast<DeclRefExpr>(lhs))
-                    return DRE->getNameInfo().getAsString();
-            }
-        }
-
-        return "";
-    }
-
-    // Loop context tracking — increment depth on entry, decrement on exit
-    bool TraverseForStmt(ForStmt *S)
-    {
-        std::string loopVar = extractLoopVar(S);
-
-        LoopDepth++;
-        if (!loopVar.empty()) LoopVarDepth[loopVar] = LoopDepth;
-
-        bool result = RecursiveASTVisitor::TraverseForStmt(S);
-
-        if (!loopVar.empty()) LoopVarDepth.erase(loopVar);
-        LoopDepth--;
-        return result;
-    }
-
-    bool TraverseWhileStmt(WhileStmt *S)
-    {
-        LoopDepth++;
-        bool result = RecursiveASTVisitor::TraverseWhileStmt(S);
-        LoopDepth--;
-        return result;
-    }
-
-    bool TraverseDoStmt(DoStmt *S)
-    {
-        LoopDepth++;
-        bool result = RecursiveASTVisitor::TraverseDoStmt(S);
-        LoopDepth--;
-        return result;
-    }
-
-    bool TraverseCXXForRangeStmt(CXXForRangeStmt *S)
-    {
-        LoopDepth++;
-        bool result = RecursiveASTVisitor::TraverseCXXForRangeStmt(S);
-        LoopDepth--;
-        return result;
-    }
-
-    // Pointer-advance detection: tmp = tmp->next
-    bool VisitBinaryOperator(BinaryOperator *BO)
-    {
+    // ---- pointer advance: `p = p->next` ----------------------------------
+    //
+    // Match by Decl identity so shadowed variables in different scopes don't
+    // collide. Also matches `this->cur = this->cur->next` because we compare
+    // the FieldDecl of the member.
+    bool VisitBinaryOperator(BinaryOperator *BO) {
         if (!BO->isAssignmentOp()) return true;
+        if (!inMainFile(BO->getExprLoc())) return true;
 
-        SourceManager &SM = Context->getSourceManager();
-        SourceLocation SL = SM.getExpansionLoc(BO->getExprLoc());
-        if (SL.isInvalid() || !SM.isWrittenInMainFile(SL)) return true;
-
-        unsigned line = SM.getSpellingLineNumber(SL);
-
-        Expr *lhs = unwrapExpr(BO->getLHS());
-        auto *lhsDRE = dyn_cast<DeclRefExpr>(lhs);
-        if (!lhsDRE) return true;
-
-        Expr *rhs = unwrapExpr(BO->getRHS());
-        auto *rhsME = dyn_cast<MemberExpr>(rhs);
+        auto *rhsME = dyn_cast<MemberExpr>(BO->getRHS()->IgnoreParenImpCasts());
         if (!rhsME) return true;
 
-        Expr *rhsBase = unwrapExpr(rhsME->getBase());
-        auto *rhsDRE = dyn_cast<DeclRefExpr>(rhsBase);
-        if (!rhsDRE) return true;
+        const ValueDecl *lhs = resolveDecl(BO->getLHS());
+        const ValueDecl *rhs = resolveDecl(rhsME->getBase());
+        if (!lhs || !rhs || lhs != rhs) return true;
 
-        // Compare by name — could false-positive on same-named variables in
-        // different scopes on the same line, but this is unlikely in practice.
-        if (lhsDRE->getNameInfo().getAsString() == rhsDRE->getNameInfo().getAsString())
-        {
-            PtrAdvances.insert({line, lhsDRE->getNameInfo().getAsString()});
-        }
-
+        PtrAdvances.emplace(lineOf(BO), resolveVar(BO->getLHS()));
         return true;
     }
 
-    // Detects array accesses and strided 2D access patterns
-    bool VisitArraySubscriptExpr(ArraySubscriptExpr *expr)
-    {
-        SourceManager &SM = Context->getSourceManager();
-        SourceLocation SL = SM.getExpansionLoc(expr->getExprLoc());
+    // ---- access recording ------------------------------------------------
 
-        if (SL.isInvalid()) return true;
-        if (!SM.isWrittenInMainFile(SL)) return true;
-
-        unsigned line = SM.getSpellingLineNumber(SL);
-
-        // Skip if this line was already recorded by an outer 2D subscript,
-        // preventing double-counting of nested array accesses (e.g. arr[r][c])
-        if (Visited2DLines.count(line)) return true;
-
-        Expr *base = unwrapExpr(expr->getBase());
-
-        // 2D array: arr[row][col] — check if row index varies faster than col
-        if (auto *innerASE = dyn_cast<ArraySubscriptExpr>(base))
-        {
-            Expr *arrBase = unwrapExpr(innerASE->getBase());
-            if (auto *DRE = dyn_cast<DeclRefExpr>(arrBase))
-            {
-                auto *rowDRE = dyn_cast<DeclRefExpr>(unwrapExpr(innerASE->getIdx()));
-                auto *colDRE = dyn_cast<DeclRefExpr>(unwrapExpr(expr->getIdx()));
-
-                if (rowDRE && colDRE)
-                {
-                    std::string rowVar = rowDRE->getNameInfo().getAsString();
-                    std::string colVar = colDRE->getNameInfo().getAsString();
-                    auto rowIt = LoopVarDepth.find(rowVar);
-                    auto colIt = LoopVarDepth.find(colVar);
-
-                    if (rowIt != LoopVarDepth.end() && colIt != LoopVarDepth.end()
-                        && rowIt->second > colIt->second)
-                    {
-                        Visited2DLines.insert(line);
-                        AccessRecord rec;
-                        rec.line = line;
-                        rec.kind = "strided";
-                        rec.var = DRE->getNameInfo().getAsString();
-                        rec.element_type = expr->getType().getAsString();
-                        rec.in_loop = true;
-                        rec.is_ptr_advance = false;
-                        Accesses.push_back(rec);
-                        return true;
-                    }
-                }
-
-                // Non-strided 2D access — record as regular array
-                AccessRecord rec;
-                rec.line = line;
-                rec.kind = "array";
-                rec.var = DRE->getNameInfo().getAsString();
-                rec.element_type = expr->getType().getAsString();
-                rec.in_loop = (LoopDepth > 0);
-                rec.is_ptr_advance = false;
-                Visited2DLines.insert(line);
-                Accesses.push_back(rec);
-                return true;
-            }
-        }
-
-        // Regular or indirect 1D array access
-        if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(base))
-        {
-            // Indirect access: arr[indices[i]] — index is itself a subscript
-            Expr *idx = unwrapExpr(expr->getIdx());
-            bool indirect = isa<ArraySubscriptExpr>(idx) ||
-                (isa<CXXOperatorCallExpr>(idx) &&
-                 cast<CXXOperatorCallExpr>(idx)->getOperator() == OO_Subscript);
-
-            AccessRecord rec;
-            rec.line = line;
-            rec.kind = indirect ? "indirect_array" : "array";
-            rec.var = DRE->getNameInfo().getAsString();
-            rec.element_type = expr->getType().getAsString();
-            rec.in_loop = (LoopDepth > 0);
-            rec.is_ptr_advance = false;
-            Accesses.push_back(rec);
-        }
-
-        return true;
+    void emit(const Expr *at, std::string kind, std::string var,
+              std::string elem_type = "", std::string struct_type = "",
+              std::string field = "", std::string index_var = "") {
+        Access a;
+        a.line = lineOf(at);
+        a.kind = std::move(kind);
+        a.var = std::move(var);
+        a.function = CurrentFunction;
+        a.element_type = std::move(elem_type);
+        a.struct_type = std::move(struct_type);
+        a.field = std::move(field);
+        a.index_var = std::move(index_var);
+        a.in_loop = LoopDepth > 0;
+        a.is_ptr_advance = PtrAdvances.count({a.line, a.var}) > 0;
+        Accesses.push_back(std::move(a));
     }
 
-    // Gets the struct type name from a MemberExpr
-    std::string getStructTypeName(MemberExpr *expr)
-    {
-        auto *RD = dyn_cast<RecordDecl>(expr->getMemberDecl()->getDeclContext());
-        if (RD) return RD->getNameAsString();
+    // Outer index varies faster than inner index -> column-major traversal.
+    bool isStrided(const Expr *outerIdx, const Expr *innerIdx) const {
+        auto *o = dyn_cast<DeclRefExpr>(outerIdx->IgnoreParenImpCasts());
+        auto *i = dyn_cast<DeclRefExpr>(innerIdx->IgnoreParenImpCasts());
+        if (!o || !i) return false;
+        int od = depthOf(o->getNameInfo().getAsString());
+        int id = depthOf(i->getNameInfo().getAsString());
+        return od > 0 && id > 0 && od > id;
+    }
+
+    bool indirectIndex(const Expr *idx) const {
+        idx = idx->IgnoreParenImpCasts();
+        if (isa<ArraySubscriptExpr>(idx)) return true;
+        if (auto *call = dyn_cast<CXXOperatorCallExpr>(idx))
+            return call->getOperator() == OO_Subscript;
+        return false;
+    }
+
+    // For an indirect index expression (`arr[idx[i]]` / `vec[idx[i]]`),
+    // return the name of the outer index array (`idx`).
+    std::string indexArrayName(const Expr *idx) const {
+        idx = idx->IgnoreParenImpCasts();
+        if (auto *ase = dyn_cast<ArraySubscriptExpr>(idx))
+            return resolveVar(ase->getBase());
+        if (auto *call = dyn_cast<CXXOperatorCallExpr>(idx))
+            if (call->getOperator() == OO_Subscript && call->getNumArgs() >= 1)
+                return resolveVar(call->getArg(0));
         return "";
     }
 
-    // Detects struct/member accesses and AoS patterns
-    bool VisitMemberExpr(MemberExpr *expr)
-    {
-        SourceManager &SM = Context->getSourceManager();
-        SourceLocation SL = SM.getExpansionLoc(expr->getExprLoc());
+    // Raw arrays: `a[i]`, `a[i][j]`, `a[indices[i]]`.
+    bool VisitArraySubscriptExpr(ArraySubscriptExpr *expr) {
+        if (!inMainFile(expr->getExprLoc()) || Consumed.count(expr)) return true;
 
-        if (SL.isInvalid()) return true;
-        if (!SM.isWrittenInMainFile(SL)) return true;
+        const Expr *base = expr->getBase()->IgnoreParenImpCasts();
 
-        unsigned line = SM.getSpellingLineNumber(SL);
+        if (auto *inner = dyn_cast<ArraySubscriptExpr>(base)) {
+            Consumed.insert(inner);
+            std::string var = resolveVar(inner->getBase());
+            if (var.empty()) return true;
+            bool strided = isStrided(inner->getIdx(), expr->getIdx());
+            emit(expr, strided ? "strided" : "array", var,
+                 expr->getType().getAsString());
+            return true;
+        }
 
-        Expr *base = unwrapExpr(expr->getBase());
+        std::string var = resolveVar(base);
+        if (var.empty()) return true;
+        bool indirect = indirectIndex(expr->getIdx());
+        emit(expr, indirect ? "indirect_array" : "array", var,
+             expr->getType().getAsString(), "", "",
+             indirect ? indexArrayName(expr->getIdx()) : "");
+        return true;
+    }
 
-        // AoS pattern: items[i].field — MemberExpr base is ArraySubscriptExpr
-        if (auto *ASE = dyn_cast<ArraySubscriptExpr>(base))
-        {
-            Expr *arrBase = unwrapExpr(ASE->getBase());
-            if (auto *DRE = dyn_cast<DeclRefExpr>(arrBase))
-            {
-                AccessRecord rec;
-                rec.line = line;
-                rec.kind = "aos_member";
-                rec.var = DRE->getNameInfo().getAsString();
-                rec.field = expr->getMemberNameInfo().getAsString();
-                rec.struct_type = getStructTypeName(expr);
-                rec.in_loop = (LoopDepth > 0);
-                rec.is_ptr_advance = false;
-                Accesses.push_back(rec);
+    // Struct/class members. Skipped for chained `a.b.c` so only the innermost
+    // access is counted (matches the perf model: one cache-line load per line).
+    bool VisitMemberExpr(MemberExpr *expr) {
+        if (!inMainFile(expr->getExprLoc()) || Consumed.count(expr)) return true;
+
+        const Expr *base = expr->getBase()->IgnoreParenImpCasts();
+        std::string field = expr->getMemberNameInfo().getAsString();
+        std::string structType = structTypeOf(expr);
+
+        if (auto *ase = dyn_cast<ArraySubscriptExpr>(base)) {
+            std::string var = resolveVar(ase->getBase());
+            if (var.empty()) return true;
+            Consumed.insert(ase);
+            emit(expr, "aos_member", var, "", structType, field);
+            return true;
+        }
+
+        if (auto *call = dyn_cast<CXXOperatorCallExpr>(base)) {
+            if (call->getOperator() == OO_Subscript && call->getNumArgs() >= 1) {
+                std::string var = resolveVar(call->getArg(0));
+                if (var.empty()) return true;
+                Consumed.insert(call);
+                emit(expr, "aos_member", var, "", structType, field);
                 return true;
             }
         }
 
-        // Vector AoS pattern: vec[i].field — base is CXXOperatorCallExpr (operator[])
-        if (auto *OCE = dyn_cast<CXXOperatorCallExpr>(base))
-        {
-            if (OCE->getOperator() == OO_Subscript)
-            {
-                Expr *vecObj = unwrapExpr(OCE->getArg(0));
-                if (auto *DRE = dyn_cast<DeclRefExpr>(vecObj))
-                {
-                    AccessRecord rec;
-                    rec.line = line;
-                    rec.kind = "aos_member";
-                    rec.var = DRE->getNameInfo().getAsString();
-                    rec.field = expr->getMemberNameInfo().getAsString();
-                    rec.struct_type = getStructTypeName(expr);
-                    rec.in_loop = (LoopDepth > 0);
-                    rec.is_ptr_advance = false;
-                    Accesses.push_back(rec);
-                    return true;
-                }
-            }
-        }
-
-        // Regular pointer/direct member access: tmp->field or obj.field
-        if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(base))
-        {
-            AccessRecord rec;
-            rec.line = line;
-            rec.kind = "struct_member";
-            rec.var = DRE->getNameInfo().getAsString();
-            rec.field = expr->getMemberNameInfo().getAsString();
-            rec.struct_type = getStructTypeName(expr);
-            rec.in_loop = (LoopDepth > 0);
-            rec.is_ptr_advance = PtrAdvances.count({line, rec.var}) > 0;
-            Accesses.push_back(rec);
-        }
+        std::string var = resolveVar(base);
+        if (var.empty()) return true;
+        emit(expr, "struct_member", var, "", structType, field);
         return true;
     }
 
-    // Detects vector accesses (operator[])
-    bool VisitCXXOperatorCallExpr(CXXOperatorCallExpr *expr)
-    {
+    // Container subscript: `vec[i]`, `vec[j][i]`, `vec[indices[i]]`.
+    bool VisitCXXOperatorCallExpr(CXXOperatorCallExpr *expr) {
         if (expr->getOperator() != OO_Subscript) return true;
+        if (!inMainFile(expr->getExprLoc()) || Consumed.count(expr)) return true;
+        if (expr->getNumArgs() < 2) return true;
 
-        SourceManager &SM = Context->getSourceManager();
-        SourceLocation SL = SM.getExpansionLoc(expr->getExprLoc());
+        const Expr *obj = expr->getArg(0)->IgnoreParenImpCasts();
+        const Expr *idx = expr->getArg(1);
 
-        if (SL.isInvalid()) return true;
-        if (!SM.isWrittenInMainFile(SL)) return true;
-
-        unsigned line = SM.getSpellingLineNumber(SL);
-
-        Expr *arg = unwrapExpr(expr->getArg(0));
-        if (auto *DRE = dyn_cast<DeclRefExpr>(arg))
-        {
-            // Indirect access: vec[indices[i]] — index is itself a subscript
-            Expr *idx = unwrapExpr(expr->getArg(1));
-            bool indirect = isa<ArraySubscriptExpr>(idx) ||
-                (isa<CXXOperatorCallExpr>(idx) &&
-                 cast<CXXOperatorCallExpr>(idx)->getOperator() == OO_Subscript);
-
-            AccessRecord rec;
-            rec.line = line;
-            rec.kind = indirect ? "indirect_vector" : "vector";
-            rec.var = DRE->getNameInfo().getAsString();
-            rec.element_type = expr->getType().getAsString();
-            rec.in_loop = (LoopDepth > 0);
-            rec.is_ptr_advance = false;
-            Accesses.push_back(rec);
+        if (auto *inner = dyn_cast<CXXOperatorCallExpr>(obj)) {
+            if (inner->getOperator() == OO_Subscript && inner->getNumArgs() >= 2) {
+                Consumed.insert(inner);
+                std::string var = resolveVar(inner->getArg(0));
+                if (var.empty()) return true;
+                bool strided = isStrided(inner->getArg(1), idx);
+                emit(expr, strided ? "strided" : "vector", var,
+                     expr->getType().getAsString());
+                return true;
+            }
         }
 
+        std::string var = resolveVar(obj);
+        if (var.empty()) return true;
+        bool indirect = indirectIndex(idx);
+        emit(expr, indirect ? "indirect_vector" : "vector", var,
+             expr->getType().getAsString(), "", "",
+             indirect ? indexArrayName(idx) : "");
         return true;
     }
 
-    // Emit all collected data as JSON
-    void emitJSON()
-    {
-        llvm::json::Object root;
+    // ---- JSON emission ---------------------------------------------------
 
-        // Structs
+    llvm::json::Value toJSON() const {
         llvm::json::Object structs;
-        for (const auto &pair : Structs)
-        {
-            llvm::json::Object structObj;
-            structObj["size"] = static_cast<int64_t>(pair.second.size);
-
+        for (auto &[name, sr] : Structs) {
             llvm::json::Array fields;
-            for (const auto &fr : pair.second.fields)
-            {
-                llvm::json::Object fieldObj;
-                fieldObj["name"] = fr.name;
-                fieldObj["type"] = fr.type;
-                fieldObj["size"] = static_cast<int64_t>(fr.size);
-                fieldObj["offset"] = static_cast<int64_t>(fr.offset);
-                fields.push_back(std::move(fieldObj));
+            for (auto &f : sr.fields) {
+                fields.push_back(llvm::json::Object{
+                    {"name", f.name},
+                    {"type", f.type},
+                    {"size", static_cast<int64_t>(f.size)},
+                    {"offset", static_cast<int64_t>(f.offset)},
+                });
             }
-            structObj["fields"] = std::move(fields);
-            structs[pair.first] = std::move(structObj);
+            structs[name] = llvm::json::Object{
+                {"size", static_cast<int64_t>(sr.size)},
+                {"fields", std::move(fields)},
+            };
         }
-        root["structs"] = std::move(structs);
 
-        // Accesses
         llvm::json::Array accesses;
-        for (const auto &acc : Accesses)
-        {
-            llvm::json::Object obj;
-            obj["line"] = static_cast<int64_t>(acc.line);
-            obj["kind"] = acc.kind;
-            obj["var"] = acc.var;
-            if (!acc.element_type.empty()) obj["element_type"] = acc.element_type;
-            if (!acc.struct_type.empty()) obj["struct_type"] = acc.struct_type;
-            if (!acc.field.empty()) obj["field"] = acc.field;
-            obj["in_loop"] = acc.in_loop;
-            if (acc.is_ptr_advance) obj["is_ptr_advance"] = true;
-            accesses.push_back(std::move(obj));
+        for (auto &a : Accesses) {
+            llvm::json::Object o;
+            o["line"] = static_cast<int64_t>(a.line);
+            o["kind"] = a.kind;
+            o["var"] = a.var;
+            if (!a.function.empty()) o["function"] = a.function;
+            if (!a.element_type.empty()) o["element_type"] = a.element_type;
+            if (!a.struct_type.empty())  o["struct_type"] = a.struct_type;
+            if (!a.field.empty())        o["field"] = a.field;
+            if (!a.index_var.empty())    o["index_var"] = a.index_var;
+            o["in_loop"] = a.in_loop;
+            if (a.is_ptr_advance) o["is_ptr_advance"] = true;
+            accesses.push_back(std::move(o));
         }
-        root["accesses"] = std::move(accesses);
 
-        llvm::outs() << llvm::json::Value(std::move(root)) << "\n";
+        return llvm::json::Value(llvm::json::Object{
+            {"structs", std::move(structs)},
+            {"accesses", std::move(accesses)},
+        });
     }
 };
 
-// Runs the visitor once the translation unit is fully parsed
-class AccessConsumer : public ASTConsumer
-{
+class Consumer : public ASTConsumer {
 public:
-
-    void HandleTranslationUnit(ASTContext &context) override
-    {
-        AccessVisitor visitor(&context);
-        visitor.TraverseDecl(context.getTranslationUnitDecl());
-        visitor.emitJSON();
+    void HandleTranslationUnit(ASTContext &ctx) override {
+        Visitor v(ctx);
+        v.TraverseDecl(ctx.getTranslationUnitDecl());
+        llvm::outs() << v.toJSON() << "\n";
     }
 };
 
-// Frontend action factory that creates the AccessConsumer for each source file
-class AccessAction : public ASTFrontendAction
-{
+class Action : public ASTFrontendAction {
 public:
-
-    std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI, StringRef file) override
-    {
-        return std::make_unique<AccessConsumer>();
+    std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &,
+                                                   StringRef) override {
+        return std::make_unique<Consumer>();
     }
 };
 
-static llvm::cl::OptionCategory MyToolCategory("ast-analyzer options");
+llvm::cl::OptionCategory ToolCategory("ast-analyzer options");
 
-int main(int argc, const char **argv)
-{
-    if (argc < 2)
-    {
-        std::cerr << "Usage: ast_analyzer <source_file>" << std::endl;
+} // namespace
+
+int main(int argc, const char **argv) {
+    auto parser = tooling::CommonOptionsParser::create(argc, argv, ToolCategory);
+    if (!parser) {
+        llvm::errs() << parser.takeError();
         return 1;
     }
-
-    auto parser = tooling::CommonOptionsParser::create(argc, argv, MyToolCategory);
-
-    if (!parser)
-    {
-        llvm::errs() << "Error creating parser\n";
-        return 1;
-    }
-
-    tooling::CommonOptionsParser& OptionsParser = parser.get();
-    tooling::ClangTool tool(OptionsParser.getCompilations(), OptionsParser.getSourcePathList());
-
-    return tool.run(tooling::newFrontendActionFactory<AccessAction>().get());
+    tooling::ClangTool tool(parser->getCompilations(), parser->getSourcePathList());
+    return tool.run(tooling::newFrontendActionFactory<Action>().get());
 }

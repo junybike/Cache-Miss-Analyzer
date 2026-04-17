@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
+"""End-to-end pipeline driver: build analyzer, compile source, profile, recommend."""
 
-import argparse, subprocess, sys, os
+import argparse
+import os
+import shlex
+import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).parent.resolve()
@@ -11,53 +16,74 @@ LLM_PACKAGES = {
     "gemini":  "google-generativeai",
 }
 
-def ensure_llm_dependency(llm: str):
-    package = LLM_PACKAGES.get(llm)
-    if not package:
-        return
-    try:
-        __import__(package.replace("-", "_").split(".")[0])
-    except ImportError:
-        print(f"Installing {package}...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package, "-q"])
+LLM_ENV_VARS = {
+    "claude":  "ANTHROPIC_API_KEY",
+    "chatgpt": "OPENAI_API_KEY",
+    "gemini":  "GEMINI_API_KEY",
+}
 
-def run(cmd, cwd=None):
-    res = subprocess.run(cmd, shell=True, cwd=cwd)
-    if res.returncode != 0:
-        sys.exit(res.returncode)
+
+def ensure_llm_package(llm):
+    pkg = LLM_PACKAGES.get(llm)
+    if not pkg:
+        return
+    module = pkg.replace("-", "_").split(".")[0]
+    try:
+        __import__(module)
+    except ImportError:
+        print(f"Installing {pkg}...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", pkg, "-q"])
+
+
+def run(cmd, cwd=None, env=None):
+    print("$", " ".join(shlex.quote(c) for c in cmd), flush=True)
+    r = subprocess.run(cmd, cwd=cwd, env=env)
+    if r.returncode != 0:
+        sys.exit(r.returncode)
+
 
 def main():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("source_file")
-    parser.add_argument("--llm", default="claude")
-    parser.add_argument("--mode", default="instruction")
-
-    args = parser.parse_args()
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("source_file")
+    ap.add_argument("--llm", default="claude", choices=list(LLM_PACKAGES))
+    ap.add_argument("--mode", default="instruction",
+                    choices=["instruction", "copy", "edit"])
+    ap.add_argument("--cflags", default="-g -no-pie -O0",
+                    help="flags passed to g++ (default: %(default)r)")
+    args = ap.parse_args()
 
     src = ROOT / args.source_file
     binary = src.with_suffix("")
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    env_var = LLM_ENV_VARS[args.llm]
+    api_key = os.environ.get(env_var, "")
 
     if args.mode != "instruction":
-        ensure_llm_dependency(args.llm)
+        ensure_llm_package(args.llm)
         if not api_key:
-            print(f"Error: ANTHROPIC_API_KEY not set (required for --mode {args.mode})", flush=True)
-            sys.exit(1)
+            sys.exit(f"Error: {env_var} not set (required for --mode {args.mode})")
+
+    if "-O0" not in args.cflags:
+        print("Note: profiling a non-O0 build — aggressive inlining may make "
+              "line-level attribution less accurate.", flush=True)
+
+    build = ROOT / "analysis" / "build"
+    build.mkdir(parents=True, exist_ok=True)
 
     print("Building AST analyzer...", flush=True)
-    build_dir = ROOT / "analysis" / "build"
-    run(f"mkdir -p {build_dir} && cmake -S {ROOT / 'analysis'} -B {build_dir} && make -C {build_dir}")
+    run(["cmake", "-S", str(ROOT / "analysis"), "-B", str(build)])
+    run(["make", "-C", str(build)])
 
     print("Compiling source...", flush=True)
-    run(f"g++ -g -no-pie {src} -o {binary}")
+    run(["g++", *shlex.split(args.cflags), str(src), "-o", str(binary)])
 
-    # print("Allowing perf permissions...")
-    # run("sudo sysctl kernel.perf_event_paranoid=0")
-
-    api_key_arg = f"--api-key {api_key}" if api_key else ""
     print("Running profiler pipeline...", flush=True)
-    run(f"./profiler/run_perf.sh {src} {binary} --llm {args.llm} --mode {args.mode} {api_key_arg}", cwd=ROOT)
+    cmd = [str(ROOT / "profiler" / "run_perf.sh"), str(src), str(binary),
+           "--llm", args.llm, "--mode", args.mode]
+    env = os.environ.copy()
+    if api_key:
+        env[LLM_ENV_VARS[args.llm]] = api_key
+    run(cmd, cwd=ROOT, env=env)
+
 
 if __name__ == "__main__":
     main()

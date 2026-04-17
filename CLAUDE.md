@@ -22,7 +22,7 @@ The `--llm` flag (`claude`, `chatgpt`, `gemini`) is only relevant for `copy` and
 
 ## Claude Code Workflow
 
-**Do not use `--mode copy` or `--mode edit`.** You are already here — apply the fixes directly.
+**Do not use `--mode copy` or `--mode edit`.** You are already here, so apply the fixes directly.
 
 1. Run instruction mode to get recommendations and generate the JSON:
    ```
