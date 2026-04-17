@@ -15,11 +15,13 @@ from . import (
     hot_cold_partition,
     pointer_chasing,
     random_access,
+    shared_variable,
     strided_access,
     struct_reorder,
 )
 
 RULES = [
+    shared_variable.run,
     pointer_chasing.run,
     aos_to_soa.run,
     struct_reorder.run,

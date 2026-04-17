@@ -48,6 +48,29 @@ struct Struct {
     std::vector<Field> fields;
 };
 
+enum class ShareKind {
+    CapturedByRef,
+    PassedByPtr,
+    PassedByRef,
+    GlobalOrStatic,
+};
+
+static std::string shareKindStr(ShareKind sk) {
+    switch (sk) {
+        case ShareKind::CapturedByRef:  return "captured_by_ref";
+        case ShareKind::PassedByPtr:    return "passed_by_ptr";
+        case ShareKind::PassedByRef:    return "passed_by_ref";
+        case ShareKind::GlobalOrStatic: return "global_or_static";
+    }
+    return "unknown";
+}
+
+struct SharedVar {
+    std::string name, type, thread_api;
+    ShareKind kind;
+    unsigned line;
+};
+
 class Visitor : public RecursiveASTVisitor<Visitor> {
     ASTContext &Ctx;
 
@@ -68,6 +91,11 @@ class Visitor : public RecursiveASTVisitor<Visitor> {
 
     std::vector<Access> Accesses;
     std::map<std::string, Struct> Structs;
+
+    bool IsMultithreaded = false;
+    std::vector<SharedVar> SharedCandidates;
+    std::set<std::string> ThreadFnNames;
+    std::set<std::string> GlobalVarNames;
 
 public:
     explicit Visitor(ASTContext &c) : Ctx(c) {}
@@ -249,6 +277,15 @@ public:
         return true;
     }
 
+    // ---- global/static variable tracking ------------------------------------
+
+    bool VisitVarDecl(VarDecl *VD) {
+        if (!VD->hasGlobalStorage()) return true;
+        if (!inMainFile(VD->getLocation())) return true;
+        GlobalVarNames.insert(VD->getNameAsString());
+        return true;
+    }
+
     // ---- pointer advance: `p = p->next` ----------------------------------
     //
     // Match by Decl identity so shadowed variables in different scopes don't
@@ -406,6 +443,236 @@ public:
         return true;
     }
 
+    // ---- multithreading detection -------------------------------------------
+
+    // std::thread / std::jthread construction
+    bool VisitCXXConstructExpr(CXXConstructExpr *expr) {
+        if (!inMainFile(expr->getExprLoc())) return true;
+        auto *CD = expr->getConstructor();
+        if (!CD) return true;
+        std::string name = CD->getParent()->getNameAsString();
+        if (name == "thread" || name == "jthread") {
+            IsMultithreaded = true;
+            detectSharedArgs(expr, lineOf(expr), "std::thread");
+        }
+        return true;
+    }
+
+    // std::async and pthread_create
+    bool VisitCallExpr(CallExpr *expr) {
+        if (!inMainFile(expr->getExprLoc())) return true;
+        FunctionDecl *FD = expr->getDirectCallee();
+        if (!FD) return true;
+        std::string name = FD->getNameAsString();
+        if (name == "async") {
+            if (FD->getQualifiedNameAsString().find("std::") != std::string::npos) {
+                IsMultithreaded = true;
+                detectSharedArgs(expr, lineOf(expr), "std::async");
+            }
+        } else if (name == "pthread_create") {
+            IsMultithreaded = true;
+            detectPthreadCreate(expr, lineOf(expr));
+        }
+        return true;
+    }
+
+    // OpenMP: detect omp_outlined function names and omp attributes
+    bool VisitFunctionDecl(FunctionDecl *FD) {
+        std::string name = FD->getNameAsString();
+        if (name.find("omp_outlined") != std::string::npos ||
+            name.find(".omp.") != std::string::npos)
+            IsMultithreaded = true;
+        for (auto *attr : FD->attrs())
+            if (std::string(attr->getSpelling()).find("omp") != std::string::npos)
+                IsMultithreaded = true;
+        return true;
+    }
+
+    // ---- shared-variable helpers --------------------------------------------
+
+    // Inspect args to std::thread/std::async constructors.
+    // arg[0] = callable, arg[1..] = arguments forwarded to the callable.
+    template <typename CallLike>
+    void detectSharedArgs(CallLike *expr, unsigned line, const std::string &api) {
+        if (expr->getNumArgs() == 0) return;
+        const Expr *callable = expr->getArg(0)->IgnoreParenImpCasts();
+
+        if (auto *LE = dyn_cast<LambdaExpr>(callable)) {
+            for (const auto &capture : LE->captures()) {
+                if (capture.getCaptureKind() == LCK_ByRef) {
+                    if (auto *VD = dyn_cast<VarDecl>(capture.getCapturedVar())) {
+                        SharedCandidates.push_back({
+                            VD->getNameAsString(),
+                            VD->getType().getAsString(),
+                            api, ShareKind::CapturedByRef, line,
+                        });
+                    }
+                }
+            }
+            collectThreadFnName(callable);
+        } else if (auto *DRE = dyn_cast<DeclRefExpr>(callable)) {
+            ThreadFnNames.insert(DRE->getNameInfo().getAsString());
+        }
+
+        for (unsigned i = 1; i < expr->getNumArgs(); ++i) {
+            const Expr *arg = expr->getArg(i)->IgnoreParenImpCasts();
+            QualType qt = arg->getType();
+
+            // std::ref / std::cref wraps a by-reference share
+            if (auto *CE = dyn_cast<CallExpr>(arg)) {
+                if (const FunctionDecl *fd = CE->getDirectCallee()) {
+                    std::string fn = fd->getQualifiedNameAsString();
+                    if ((fn == "std::ref" || fn == "std::cref") && CE->getNumArgs() == 1) {
+                        const Expr *inner = CE->getArg(0)->IgnoreParenImpCasts();
+                        if (auto *DRE = dyn_cast<DeclRefExpr>(inner)) {
+                            SharedCandidates.push_back({
+                                DRE->getNameInfo().getAsString(),
+                                DRE->getDecl()->getType().getAsString(),
+                                api, ShareKind::PassedByRef, line,
+                            });
+                        }
+                        continue;
+                    }
+                }
+            }
+
+            if (qt->isPointerType()) {
+                if (auto *DRE = dyn_cast<DeclRefExpr>(arg)) {
+                    SharedCandidates.push_back({
+                        DRE->getNameInfo().getAsString(),
+                        DRE->getDecl()->getType().getAsString(),
+                        api, ShareKind::PassedByPtr, line,
+                    });
+                } else if (auto *UO = dyn_cast<UnaryOperator>(arg)) {
+                    if (UO->getOpcode() == UO_AddrOf) {
+                        const Expr *operand = UO->getSubExpr()->IgnoreParenImpCasts();
+                        if (auto *DRE = dyn_cast<DeclRefExpr>(operand)) {
+                            SharedCandidates.push_back({
+                                DRE->getNameInfo().getAsString(),
+                                DRE->getDecl()->getType().getAsString(),
+                                api, ShareKind::PassedByPtr, line,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // pthread_create(thread, attr, fn, arg) — arg[2] = function pointer, arg[3] = void* data
+    void detectPthreadCreate(CallExpr *expr, unsigned line) {
+        if (expr->getNumArgs() < 3) return;
+        const Expr *fnArg = expr->getArg(2)->IgnoreParenImpCasts();
+        if (auto *DRE = dyn_cast<DeclRefExpr>(fnArg))
+            ThreadFnNames.insert(DRE->getNameInfo().getAsString());
+
+        if (expr->getNumArgs() < 4) return;
+        const Expr *dataArg = expr->getArg(3)->IgnoreParenImpCasts();
+
+        const Expr *inner = dataArg;
+        if (auto *CCE = dyn_cast<CStyleCastExpr>(inner))
+            inner = CCE->getSubExpr()->IgnoreParenImpCasts();
+
+        if (auto *UO = dyn_cast<UnaryOperator>(inner)) {
+            if (UO->getOpcode() == UO_AddrOf) {
+                const Expr *operand = UO->getSubExpr()->IgnoreParenImpCasts();
+                if (auto *DRE = dyn_cast<DeclRefExpr>(operand)) {
+                    SharedCandidates.push_back({
+                        DRE->getNameInfo().getAsString(),
+                        DRE->getDecl()->getType().getAsString(),
+                        "pthread", ShareKind::PassedByPtr, line,
+                    });
+                }
+            }
+        }
+    }
+
+    void collectThreadFnName(const Expr *expr) {
+        if (auto *DRE = dyn_cast<DeclRefExpr>(expr->IgnoreParenImpCasts()))
+            ThreadFnNames.insert(DRE->getNameInfo().getAsString());
+    }
+
+    // For [&] lambdas: walk the lambda body and record every local variable
+    // referenced inside as a by-ref shared candidate.
+    void collectImplicitRefCaptures(LambdaExpr *Lambda, unsigned line,
+                                    const std::string &api) {
+        struct RefCollector : public RecursiveASTVisitor<RefCollector> {
+            std::vector<std::pair<std::string, std::string>> vars;
+            bool VisitDeclRefExpr(DeclRefExpr *DRE) {
+                if (auto *VD = dyn_cast<VarDecl>(DRE->getDecl()))
+                    if (VD->isLocalVarDecl() && !VD->isStaticLocal())
+                        vars.push_back({VD->getNameAsString(),
+                                        VD->getType().getAsString()});
+                return true;
+            }
+        };
+        RefCollector collector;
+        collector.TraverseStmt(Lambda->getBody());
+
+        std::set<std::string> seen;
+        for (auto &[name, type] : collector.vars) {
+            if (!seen.insert(name).second) continue;
+            SharedCandidates.push_back({name, type, api,
+                                        ShareKind::CapturedByRef, line});
+        }
+    }
+
+    // Walk the functions known to run on threads; record any global/static
+    // variables they reference that were declared in the main file.
+    void scanThreadFunctionsForGlobals(TranslationUnitDecl *TU) {
+        if (ThreadFnNames.empty() || GlobalVarNames.empty()) return;
+
+        struct Scanner : public RecursiveASTVisitor<Scanner> {
+            Visitor *Parent;
+            ASTContext &Ctx;
+            bool InsideThreadFn = false;
+
+            Scanner(Visitor *p, ASTContext &ctx) : Parent(p), Ctx(ctx) {}
+
+            bool TraverseFunctionDecl(FunctionDecl *FD) {
+                bool prev = InsideThreadFn;
+                InsideThreadFn = Parent->ThreadFnNames.count(FD->getNameAsString()) > 0;
+                bool r = RecursiveASTVisitor::TraverseFunctionDecl(FD);
+                InsideThreadFn = prev;
+                return r;
+            }
+
+            bool VisitDeclRefExpr(DeclRefExpr *DRE) {
+                if (!InsideThreadFn) return true;
+                auto *VD = dyn_cast<VarDecl>(DRE->getDecl());
+                if (!VD || !VD->hasGlobalStorage()) return true;
+                std::string name = VD->getNameAsString();
+                if (!Parent->GlobalVarNames.count(name)) return true;
+
+                auto &SM = Ctx.getSourceManager();
+                SourceLocation SL = SM.getExpansionLoc(DRE->getLocation());
+                if (SL.isInvalid() || !SM.isWrittenInMainFile(SL)) return true;
+                unsigned line = SM.getSpellingLineNumber(SL);
+
+                for (auto &existing : Parent->SharedCandidates)
+                    if (existing.name == name &&
+                        existing.kind == ShareKind::GlobalOrStatic)
+                        return true;
+
+                Parent->SharedCandidates.push_back({
+                    name, VD->getType().getAsString(),
+                    "global", ShareKind::GlobalOrStatic, line,
+                });
+                return true;
+            }
+        };
+
+        Scanner scanner(this, Ctx);
+        scanner.TraverseDecl(TU);
+    }
+
+    // Must be called after TraverseDecl; triggers the global-scan pass when the
+    // code is multithreaded.
+    void finalize(TranslationUnitDecl *TU) {
+        if (IsMultithreaded)
+            scanThreadFunctionsForGlobals(TU);
+    }
+
     // ---- JSON emission ---------------------------------------------------
 
     llvm::json::Value toJSON() const {
@@ -432,7 +699,7 @@ public:
             o["line"] = static_cast<int64_t>(a.line);
             o["kind"] = a.kind;
             o["var"] = a.var;
-            if (!a.function.empty()) o["function"] = a.function;
+            if (!a.function.empty())     o["function"] = a.function;
             if (!a.element_type.empty()) o["element_type"] = a.element_type;
             if (!a.struct_type.empty())  o["struct_type"] = a.struct_type;
             if (!a.field.empty())        o["field"] = a.field;
@@ -442,10 +709,24 @@ public:
             accesses.push_back(std::move(o));
         }
 
-        return llvm::json::Value(llvm::json::Object{
-            {"structs", std::move(structs)},
-            {"accesses", std::move(accesses)},
-        });
+        llvm::json::Object root;
+        root["multithreaded"] = IsMultithreaded;
+        if (IsMultithreaded) {
+            llvm::json::Array candidates;
+            for (const auto &sc : SharedCandidates) {
+                candidates.push_back(llvm::json::Object{
+                    {"var",        sc.name},
+                    {"type",       sc.type},
+                    {"share_kind", shareKindStr(sc.kind)},
+                    {"line",       static_cast<int64_t>(sc.line)},
+                    {"thread_api", sc.thread_api},
+                });
+            }
+            root["shared_candidates"] = std::move(candidates);
+        }
+        root["structs"] = std::move(structs);
+        root["accesses"] = std::move(accesses);
+        return llvm::json::Value(std::move(root));
     }
 };
 
@@ -453,7 +734,9 @@ class Consumer : public ASTConsumer {
 public:
     void HandleTranslationUnit(ASTContext &ctx) override {
         Visitor v(ctx);
-        v.TraverseDecl(ctx.getTranslationUnitDecl());
+        auto *TU = ctx.getTranslationUnitDecl();
+        v.TraverseDecl(TU);
+        v.finalize(TU);
         llvm::outs() << v.toJSON() << "\n";
     }
 };
