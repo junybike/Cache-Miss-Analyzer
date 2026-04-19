@@ -8,28 +8,28 @@
 
 int main()
 {
-    const int N = 10000000;
+        const int N = 10000000;
 
-    std::vector<int> data(N);
-    std::vector<int> indices(N);
+        std::vector<int> data(N);
+        std::vector<int> indices(N);
 
-    for (int i = 0; i < N; i++)
-        data[i] = i;
+        for (int i = 0; i < N; i++)
+                data[i] = i;
 
-    std::iota(indices.begin(), indices.end(), 0);
-    std::mt19937 rng(42);
-    std::shuffle(indices.begin(), indices.end(), rng);
+        std::iota(indices.begin(), indices.end(), 0);
+        std::mt19937 rng(42);
+        std::shuffle(indices.begin(), indices.end(), rng);
 
-    long sum = 0;
-    for (int i = 0; i < N; i++)
-        sum += data[indices[i]];
+        long sum = 0;
+        for (int i = 0; i < N; i++)
+                sum += data[indices[i]];
 
-    long sum_seq = 0;
-    for (int i = 0; i < N; i++)
-        sum_seq += data[i];
+        long sum_seq = 0;
+        for (int i = 0; i < N; i++)
+                sum_seq += data[i];
 
-    std::cout << "random sum:     " << sum << std::endl;
-    std::cout << "sequential sum: " << sum_seq << std::endl;
+        std::cout << "random sum:     " << sum << std::endl;
+        std::cout << "sequential sum: " << sum_seq << std::endl;
 
-    return 0;
+        return 0;
 }
