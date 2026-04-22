@@ -9,3 +9,8 @@ openai
 
 # Gemini
 google-generativeai
+
+# Plotting
+matplotlib
+numpy
+seaborn

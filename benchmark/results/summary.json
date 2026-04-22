@@ -1,0 +1,368 @@
+{
+  "examples": {
+    "aos_vs_soa": {
+      "before": {
+        "total_misses": 1093,
+        "runtime_ms": 576.3,
+        "variables": {
+          "main::particles": 1093
+        }
+      },
+      "after": {
+        "total_misses": 760,
+        "runtime_ms": 463.5,
+        "variables": {
+          "main::cold": 176,
+          "main::x": 298,
+          "main::y": 286
+        }
+      },
+      "reduction_pct": 30.5,
+      "speedup_pct": 19.6,
+      "top_variables": [
+        {
+          "variable": "main::particles",
+          "before": 1093,
+          "after": 0,
+          "reduction_pct": 100.0
+        },
+        {
+          "variable": "main::cold",
+          "before": 0,
+          "after": 176,
+          "reduction_pct": 0.0
+        },
+        {
+          "variable": "main::x",
+          "before": 0,
+          "after": 298,
+          "reduction_pct": 0.0
+        },
+        {
+          "variable": "main::y",
+          "before": 0,
+          "after": 286,
+          "reduction_pct": 0.0
+        }
+      ]
+    },
+    "column_major": {
+      "before": {
+        "total_misses": 499,
+        "runtime_ms": 194.1,
+        "variables": {
+          "main::matrix": 499
+        }
+      },
+      "after": {
+        "total_misses": 34,
+        "runtime_ms": 84.6,
+        "variables": {
+          "main::matrix": 34
+        }
+      },
+      "reduction_pct": 93.2,
+      "speedup_pct": 56.4,
+      "top_variables": [
+        {
+          "variable": "main::matrix",
+          "before": 499,
+          "after": 34,
+          "reduction_pct": 93.2
+        }
+      ]
+    },
+    "hot_cold": {
+      "before": {
+        "total_misses": 329,
+        "runtime_ms": 456.7,
+        "variables": {
+          "main::users": 329
+        }
+      },
+      "after": {
+        "total_misses": 236,
+        "runtime_ms": 462.4,
+        "variables": {
+          "main::users_hot": 52,
+          "main::users_cold": 184
+        }
+      },
+      "reduction_pct": 28.3,
+      "speedup_pct": -1.2,
+      "top_variables": [
+        {
+          "variable": "main::users",
+          "before": 329,
+          "after": 0,
+          "reduction_pct": 100.0
+        },
+        {
+          "variable": "main::users_cold",
+          "before": 0,
+          "after": 184,
+          "reduction_pct": 0.0
+        },
+        {
+          "variable": "main::users_hot",
+          "before": 0,
+          "after": 52,
+          "reduction_pct": 0.0
+        }
+      ]
+    },
+    "pointer_chase": {
+      "before": {
+        "total_misses": 201,
+        "runtime_ms": 2028.8,
+        "variables": {
+          "main::curr": 201
+        }
+      },
+      "after": {
+        "total_misses": 36,
+        "runtime_ms": 22.4,
+        "variables": {
+          "main::nodes": 36
+        }
+      },
+      "reduction_pct": 82.1,
+      "speedup_pct": 98.9,
+      "top_variables": [
+        {
+          "variable": "main::curr",
+          "before": 201,
+          "after": 0,
+          "reduction_pct": 100.0
+        },
+        {
+          "variable": "main::nodes",
+          "before": 0,
+          "after": 36,
+          "reduction_pct": 0.0
+        }
+      ]
+    },
+    "random_access": {
+      "before": {
+        "total_misses": 1227,
+        "runtime_ms": 549.1,
+        "variables": {
+          "main::data": 657,
+          "main::indices": 570
+        }
+      },
+      "after": {
+        "total_misses": 2743,
+        "runtime_ms": 1517.3,
+        "variables": {
+          "main::data": 234,
+          "main::indices": 2509
+        }
+      },
+      "reduction_pct": -123.6,
+      "speedup_pct": -176.3,
+      "top_variables": [
+        {
+          "variable": "main::data",
+          "before": 657,
+          "after": 234,
+          "reduction_pct": 64.4
+        },
+        {
+          "variable": "main::indices",
+          "before": 570,
+          "after": 2509,
+          "reduction_pct": -340.2
+        }
+      ]
+    },
+    "shared_variable": {
+      "before": {
+        "total_misses": 428,
+        "runtime_ms": 159.9,
+        "variables": {
+          "partial_sum::data": 261,
+          "compute_b::data": 70,
+          "compute_a::data": 27,
+          "fill_range::vec": 70
+        }
+      },
+      "after": {
+        "total_misses": 285,
+        "runtime_ms": 137.9,
+        "variables": {
+          "partial_sum::data": 72,
+          "compute_a::data": 38,
+          "compute_b::data": 94,
+          "fill_range::vec": 67,
+          "main::buf2": 8,
+          "main::output": 6
+        }
+      },
+      "reduction_pct": 33.4,
+      "speedup_pct": 13.8,
+      "top_variables": [
+        {
+          "variable": "partial_sum::data",
+          "before": 261,
+          "after": 72,
+          "reduction_pct": 72.4
+        },
+        {
+          "variable": "compute_b::data",
+          "before": 70,
+          "after": 94,
+          "reduction_pct": -34.3
+        },
+        {
+          "variable": "fill_range::vec",
+          "before": 70,
+          "after": 67,
+          "reduction_pct": 4.3
+        },
+        {
+          "variable": "compute_a::data",
+          "before": 27,
+          "after": 38,
+          "reduction_pct": -40.7
+        },
+        {
+          "variable": "main::buf2",
+          "before": 0,
+          "after": 8,
+          "reduction_pct": 0.0
+        },
+        {
+          "variable": "main::output",
+          "before": 0,
+          "after": 6,
+          "reduction_pct": 0.0
+        }
+      ]
+    },
+    "comprehensive": {
+      "before": {
+        "total_misses": 3328,
+        "runtime_ms": 2555.5,
+        "variables": {
+          "build_path::wp": 3,
+          "main::curr": 147,
+          "main::heightmap": 46,
+          "main::projectiles": 636,
+          "main::entities": 2040,
+          "main::scores": 233,
+          "main::ranking": 223
+        }
+      },
+      "after": {
+        "total_misses": 2213,
+        "runtime_ms": 1318.1,
+        "variables": {
+          "build_path::path": 43,
+          "main::path": 15,
+          "main::heightmap": 3,
+          "main::proj_x": 191,
+          "main::proj_cold": 67,
+          "main::proj_y": 163,
+          "main::ent_hot": 694,
+          "main::ent_cold": 36,
+          "main::scores": 85,
+          "main::ranking": 916
+        }
+      },
+      "reduction_pct": 33.5,
+      "speedup_pct": 48.4,
+      "top_variables": [
+        {
+          "variable": "main::entities",
+          "before": 2040,
+          "after": 0,
+          "reduction_pct": 100.0
+        },
+        {
+          "variable": "main::projectiles",
+          "before": 636,
+          "after": 0,
+          "reduction_pct": 100.0
+        },
+        {
+          "variable": "main::scores",
+          "before": 233,
+          "after": 85,
+          "reduction_pct": 63.5
+        },
+        {
+          "variable": "main::ranking",
+          "before": 223,
+          "after": 916,
+          "reduction_pct": -310.8
+        },
+        {
+          "variable": "main::curr",
+          "before": 147,
+          "after": 0,
+          "reduction_pct": 100.0
+        },
+        {
+          "variable": "main::heightmap",
+          "before": 46,
+          "after": 3,
+          "reduction_pct": 93.5
+        },
+        {
+          "variable": "build_path::wp",
+          "before": 3,
+          "after": 0,
+          "reduction_pct": 100.0
+        },
+        {
+          "variable": "build_path::path",
+          "before": 0,
+          "after": 43,
+          "reduction_pct": 0.0
+        },
+        {
+          "variable": "main::ent_cold",
+          "before": 0,
+          "after": 36,
+          "reduction_pct": 0.0
+        },
+        {
+          "variable": "main::ent_hot",
+          "before": 0,
+          "after": 694,
+          "reduction_pct": 0.0
+        },
+        {
+          "variable": "main::path",
+          "before": 0,
+          "after": 15,
+          "reduction_pct": 0.0
+        },
+        {
+          "variable": "main::proj_cold",
+          "before": 0,
+          "after": 67,
+          "reduction_pct": 0.0
+        },
+        {
+          "variable": "main::proj_x",
+          "before": 0,
+          "after": 191,
+          "reduction_pct": 0.0
+        },
+        {
+          "variable": "main::proj_y",
+          "before": 0,
+          "after": 163,
+          "reduction_pct": 0.0
+        }
+      ]
+    }
+  },
+  "overall": {
+    "avg_miss_reduction_pct": 25.3,
+    "avg_speedup_pct": 8.5
+  }
+}

@@ -7,6 +7,29 @@ import sys
 from pathlib import Path
 from typing import List
 
+CLAUDE_MODELS = {
+    "haiku":  "claude-haiku-4-5-20251001",
+    "sonnet": "claude-sonnet-4-6",
+    "opus":   "claude-opus-4-6",
+}
+
+
+def build_blind_prompt(source: str) -> str:
+    return (
+        "You are an expert C++ performance engineer.\n"
+        "Fix any performance related issues with the code below.\n\n"
+        "=== OUTPUT RULES ===\n"
+        "- Output ONLY valid C++ code\n"
+        "- Do NOT include markdown (no ```cpp)\n"
+        "- Do NOT include explanations or summaries\n"
+        "- Do NOT include comments about your changes\n"
+        "- The output must compile as-is\n\n"
+        "=== Instructions ===\n"
+        "- Keep logic unchanged\n"
+        "- Focus on cache performance, memory layout, and data access patterns\n\n"
+        f"=== Code ===\n{source}\n"
+    )
+
 
 def build_prompt(source: str, recs: List[dict]) -> str:
     issues = []
@@ -39,10 +62,11 @@ def build_prompt(source: str, recs: List[dict]) -> str:
     )
 
 
-def call_claude(prompt, api_key):
+def call_claude(prompt, api_key, model="sonnet", **_kwargs):
     import anthropic
+    model_id = CLAUDE_MODELS.get(model, model)
     r = anthropic.Anthropic(api_key=api_key).messages.create(
-        model="claude-sonnet-4-6",
+        model=model_id,
         max_tokens=4096,
         temperature=0.2,
         messages=[{"role": "user", "content": prompt}],
@@ -50,7 +74,7 @@ def call_claude(prompt, api_key):
     return r.content[0].text
 
 
-def call_chatgpt(prompt, api_key):
+def call_chatgpt(prompt, api_key, **_kwargs):
     from openai import OpenAI
     r = OpenAI(api_key=api_key).chat.completions.create(
         model="gpt-4.1",
@@ -63,7 +87,7 @@ def call_chatgpt(prompt, api_key):
     return r.choices[0].message.content
 
 
-def call_gemini(prompt, api_key):
+def call_gemini(prompt, api_key, **_kwargs):
     import google.generativeai as genai
     genai.configure(api_key=api_key)
     return genai.GenerativeModel("gemini-1.5-pro").generate_content(prompt).text
@@ -88,21 +112,21 @@ def clean_code(text: str) -> str:
     return "\n".join(out).strip()
 
 
-def apply_recommendations(source_path, recs, llm, api_key) -> str:
+def _call_llm(llm, prompt, api_key, model=None):
+    kwargs = {"model": model} if model else {}
+    return clean_code(LLM_CALLERS[llm](prompt, api_key, **kwargs))
+
+
+def apply_recommendations(source_path, recs, llm, api_key, model=None) -> str:
     source = Path(source_path).read_text()
     prompt = build_prompt(source, recs)
-    try:
-        return clean_code(LLM_CALLERS[llm](prompt, api_key))
-    except (ConnectionError, TimeoutError) as e:
-        sys.exit(f"LLM Error: network failure: {e}")
-    except Exception as e:
-        name = type(e).__name__
-        status = getattr(e, "status_code", None) or getattr(e, "status", None)
-        if status == 401:
-            sys.exit("LLM Error: Invalid API key")
-        if status == 429:
-            sys.exit("LLM Error: Exceeded current quota.")
-        sys.exit(f"LLM Error ({name}): {e}")
+    return _call_llm(llm, prompt, api_key, model)
+
+
+def apply_blind_fix(source_path, llm, api_key, model=None) -> str:
+    source = Path(source_path).read_text()
+    prompt = build_blind_prompt(source)
+    return _call_llm(llm, prompt, api_key, model)
 
 
 def optimized_path(source_path) -> str:
@@ -110,15 +134,15 @@ def optimized_path(source_path) -> str:
     return str(p.with_name(p.stem + "_optimized" + p.suffix))
 
 
-def mode_copy(source, recs, llm, api_key, out):
-    code = apply_recommendations(source, recs, llm, api_key)
+def mode_copy(source, recs, llm, api_key, out, model=None):
+    code = apply_recommendations(source, recs, llm, api_key, model=model)
     dest = out or optimized_path(source)
     Path(dest).write_text(code)
     print(f"Optimized copy written to {dest}")
 
 
-def mode_edit(source, recs, llm, api_key):
-    code = apply_recommendations(source, recs, llm, api_key)
+def mode_edit(source, recs, llm, api_key, model=None):
+    code = apply_recommendations(source, recs, llm, api_key, model=model)
     Path(source).write_text(code)
     print("Original file updated")
 

@@ -1,0 +1,2287 @@
+[
+  {
+    "type": "baseline_done",
+    "example": "aos_vs_soa",
+    "timestamp": "2026-04-21T17:51:50.434074"
+  },
+  {
+    "type": "cell_failed",
+    "example": "aos_vs_soa",
+    "model": "haiku",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHto6Vx5JAVkdLCBrURJ'}",
+    "timestamp": "2026-04-21T17:51:50.896010"
+  },
+  {
+    "type": "cell_failed",
+    "example": "aos_vs_soa",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHto7BcwWGbkJJ1hGTTn'}",
+    "timestamp": "2026-04-21T17:51:51.007150"
+  },
+  {
+    "type": "cell_failed",
+    "example": "aos_vs_soa",
+    "model": "sonnet",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHto7f9fBZpq8NgDayfW'}",
+    "timestamp": "2026-04-21T17:51:51.119258"
+  },
+  {
+    "type": "cell_failed",
+    "example": "aos_vs_soa",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHto88g67LdsKoELbrf2'}",
+    "timestamp": "2026-04-21T17:51:51.250012"
+  },
+  {
+    "type": "cell_failed",
+    "example": "aos_vs_soa",
+    "model": "opus",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHto8guwesbFkzuP5zgM'}",
+    "timestamp": "2026-04-21T17:51:51.372875"
+  },
+  {
+    "type": "cell_failed",
+    "example": "aos_vs_soa",
+    "model": "opus",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHto9CvDzf2ALQ5LmmLq'}",
+    "timestamp": "2026-04-21T17:51:51.481999"
+  },
+  {
+    "type": "baseline_done",
+    "example": "column_major",
+    "timestamp": "2026-04-21T17:51:52.923183"
+  },
+  {
+    "type": "cell_failed",
+    "example": "column_major",
+    "model": "haiku",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHtoFqXX7vS6qYfackEs'}",
+    "timestamp": "2026-04-21T17:51:53.036234"
+  },
+  {
+    "type": "cell_failed",
+    "example": "column_major",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHtoGKo6H5272Dph5jaC'}",
+    "timestamp": "2026-04-21T17:51:53.143794"
+  },
+  {
+    "type": "cell_failed",
+    "example": "column_major",
+    "model": "sonnet",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHtoGna8CF6gvj7LA3J4'}",
+    "timestamp": "2026-04-21T17:51:53.257027"
+  },
+  {
+    "type": "cell_failed",
+    "example": "column_major",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHtoHGLwFBs9pXzYW6UY'}",
+    "timestamp": "2026-04-21T17:51:53.372241"
+  },
+  {
+    "type": "cell_failed",
+    "example": "column_major",
+    "model": "opus",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHtoHm7T45AcQXt5w4ik'}",
+    "timestamp": "2026-04-21T17:51:53.481950"
+  },
+  {
+    "type": "cell_failed",
+    "example": "column_major",
+    "model": "opus",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHtoJGdDi5Bgj7XMBJL7'}",
+    "timestamp": "2026-04-21T17:51:53.641272"
+  },
+  {
+    "type": "baseline_done",
+    "example": "hot_cold",
+    "timestamp": "2026-04-21T17:51:56.182869"
+  },
+  {
+    "type": "cell_failed",
+    "example": "hot_cold",
+    "model": "haiku",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHtoVnfjNphAoDou1yWT'}",
+    "timestamp": "2026-04-21T17:51:56.302782"
+  },
+  {
+    "type": "cell_failed",
+    "example": "hot_cold",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHtoWLQh5AmFBgjaHGwK'}",
+    "timestamp": "2026-04-21T17:51:56.475157"
+  },
+  {
+    "type": "cell_failed",
+    "example": "hot_cold",
+    "model": "sonnet",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHtoX2acPreEUwCraofP'}",
+    "timestamp": "2026-04-21T17:51:56.589775"
+  },
+  {
+    "type": "cell_failed",
+    "example": "hot_cold",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHtoYGFCMbdQ6H7rXEQi'}",
+    "timestamp": "2026-04-21T17:51:56.959622"
+  },
+  {
+    "type": "cell_failed",
+    "example": "hot_cold",
+    "model": "opus",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHtoZ86AYUiS2nEeMCFe'}",
+    "timestamp": "2026-04-21T17:51:57.083137"
+  },
+  {
+    "type": "cell_failed",
+    "example": "hot_cold",
+    "model": "opus",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHtoZe6DC3ynTSwG6pgB'}",
+    "timestamp": "2026-04-21T17:51:57.201489"
+  },
+  {
+    "type": "baseline_done",
+    "example": "aos_vs_soa",
+    "timestamp": "2026-04-21T17:55:29.083082"
+  },
+  {
+    "type": "cell_failed",
+    "example": "aos_vs_soa",
+    "model": "haiku",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5CxLHULZYorW5FaUo'}",
+    "timestamp": "2026-04-21T17:55:29.428995"
+  },
+  {
+    "type": "cell_failed",
+    "example": "aos_vs_soa",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5DVaUceanAiQWBiVr'}",
+    "timestamp": "2026-04-21T17:55:29.539769"
+  },
+  {
+    "type": "cell_failed",
+    "example": "aos_vs_soa",
+    "model": "sonnet",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5Dybkb3k7qiBaDLRp'}",
+    "timestamp": "2026-04-21T17:55:29.654641"
+  },
+  {
+    "type": "cell_failed",
+    "example": "aos_vs_soa",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5ET8LCE3Hbcu4V6a8'}",
+    "timestamp": "2026-04-21T17:55:29.764444"
+  },
+  {
+    "type": "cell_failed",
+    "example": "aos_vs_soa",
+    "model": "opus",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5FY7dtYKrbW63YV3r'}",
+    "timestamp": "2026-04-21T17:55:30.107183"
+  },
+  {
+    "type": "cell_failed",
+    "example": "aos_vs_soa",
+    "model": "opus",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5GPTRoLemSnncsjpN'}",
+    "timestamp": "2026-04-21T17:55:30.219282"
+  },
+  {
+    "type": "baseline_done",
+    "example": "column_major",
+    "timestamp": "2026-04-21T17:55:31.715502"
+  },
+  {
+    "type": "cell_failed",
+    "example": "column_major",
+    "model": "haiku",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5PHhBtv7ibwMNpVRR'}",
+    "timestamp": "2026-04-21T17:55:31.854178"
+  },
+  {
+    "type": "cell_failed",
+    "example": "column_major",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5PsQtNzpEfQF7Qrkr'}",
+    "timestamp": "2026-04-21T17:55:31.996631"
+  },
+  {
+    "type": "cell_failed",
+    "example": "column_major",
+    "model": "sonnet",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5QoDun9XeQQ89Svgp'}",
+    "timestamp": "2026-04-21T17:55:32.254070"
+  },
+  {
+    "type": "cell_failed",
+    "example": "column_major",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5RZs6BSRFM4M8cCgX'}",
+    "timestamp": "2026-04-21T17:55:32.368201"
+  },
+  {
+    "type": "cell_failed",
+    "example": "column_major",
+    "model": "opus",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5S48NF86UPronNLFu'}",
+    "timestamp": "2026-04-21T17:55:32.480953"
+  },
+  {
+    "type": "cell_failed",
+    "example": "column_major",
+    "model": "opus",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5SZtUSaU9PrBP1Zc2'}",
+    "timestamp": "2026-04-21T17:55:32.643382"
+  },
+  {
+    "type": "baseline_done",
+    "example": "hot_cold",
+    "timestamp": "2026-04-21T17:55:35.189074"
+  },
+  {
+    "type": "cell_failed",
+    "example": "hot_cold",
+    "model": "haiku",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5e8ANnMGYmqBHiCvm'}",
+    "timestamp": "2026-04-21T17:55:35.306104"
+  },
+  {
+    "type": "cell_failed",
+    "example": "hot_cold",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5edgBhpkBi953qMP7'}",
+    "timestamp": "2026-04-21T17:55:35.539295"
+  },
+  {
+    "type": "cell_failed",
+    "example": "hot_cold",
+    "model": "sonnet",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5ffgmxTNS6Q9Dgs1h'}",
+    "timestamp": "2026-04-21T17:55:35.666840"
+  },
+  {
+    "type": "cell_failed",
+    "example": "hot_cold",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5gAhUDKbLTfMrSToJ'}",
+    "timestamp": "2026-04-21T17:55:35.784058"
+  },
+  {
+    "type": "cell_failed",
+    "example": "hot_cold",
+    "model": "opus",
+    "condition": "blind",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5gqdLZzxDuSbduYVH'}",
+    "timestamp": "2026-04-21T17:55:36.150349"
+  },
+  {
+    "type": "cell_failed",
+    "example": "hot_cold",
+    "model": "opus",
+    "condition": "tool_guided",
+    "reason": "llm_error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CaHu5iExih4NtfNPJGshP'}",
+    "timestamp": "2026-04-21T17:55:36.268466"
+  },
+  {
+    "type": "baseline_done",
+    "example": "column_major",
+    "timestamp": "2026-04-21T18:51:45.492565"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "haiku",
+    "condition": "blind",
+    "timestamp": "2026-04-21T18:51:48.303966"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T18:51:51.039356"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "sonnet",
+    "condition": "blind",
+    "timestamp": "2026-04-21T18:51:54.847451"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T18:51:58.913590"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "opus",
+    "condition": "blind",
+    "timestamp": "2026-04-21T18:52:03.609390"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "opus",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T18:52:09.353690"
+  },
+  {
+    "type": "baseline_done",
+    "example": "aos_vs_soa",
+    "timestamp": "2026-04-21T18:53:09.071437"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "haiku",
+    "condition": "blind",
+    "timestamp": "2026-04-21T18:53:14.846268"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T18:53:19.486845"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "sonnet",
+    "condition": "blind",
+    "timestamp": "2026-04-21T18:53:27.793320"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T18:53:35.075213"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "opus",
+    "condition": "blind",
+    "timestamp": "2026-04-21T18:53:44.196722"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "opus",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T18:53:52.417634"
+  },
+  {
+    "type": "baseline_done",
+    "example": "hot_cold",
+    "timestamp": "2026-04-21T18:57:58.807152"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "haiku",
+    "condition": "blind",
+    "timestamp": "2026-04-21T18:58:04.308567"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T18:58:09.563900"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "sonnet",
+    "condition": "blind",
+    "timestamp": "2026-04-21T18:58:16.812897"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T18:58:24.966568"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "opus",
+    "condition": "blind",
+    "timestamp": "2026-04-21T18:58:33.533684"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "opus",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T18:58:43.433303"
+  },
+  {
+    "type": "baseline_done",
+    "example": "pointer_chase",
+    "timestamp": "2026-04-21T19:00:40.324095"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "haiku",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:00:43.127359"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:00:45.747984"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "sonnet",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:00:49.788605"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:00:53.947988"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "opus",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:00:58.601948"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "opus",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:01:04.195883"
+  },
+  {
+    "type": "baseline_done",
+    "example": "random_access",
+    "timestamp": "2026-04-21T19:02:46.688139"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "haiku",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:02:56.990529"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:03:06.923340"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "sonnet",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:03:15.095607"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:03:30.482932"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "opus",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:03:39.070970"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "opus",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:03:51.296043"
+  },
+  {
+    "type": "baseline_done",
+    "example": "shared_variable",
+    "timestamp": "2026-04-21T19:20:05.744553"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "haiku",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:20:12.629699"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:20:18.584720"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "sonnet",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:20:30.781835"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:20:44.388584"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "opus",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:20:58.174922"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "opus",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:21:10.494229"
+  },
+  {
+    "type": "baseline_done",
+    "example": "comprehensive",
+    "timestamp": "2026-04-21T19:22:23.209083"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "haiku",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:22:37.991754"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:22:53.313573"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "sonnet",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:23:24.151137"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:23:43.467958"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "opus",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:24:05.268601"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "opus",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:24:27.565237"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "haiku",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:36:23.249598"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:36:27.826407"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "sonnet",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:36:35.888451"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:36:44.553919"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "opus",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:36:52.207284"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "opus",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:36:59.718332"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "haiku",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:37:09.695404"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:37:14.950998"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "sonnet",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:37:22.219393"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:37:30.577448"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "opus",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:37:38.605289"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "opus",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:37:47.025611"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "haiku",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:37:51.616311"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:37:54.565773"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "sonnet",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:37:58.722703"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:38:02.704349"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "opus",
+    "condition": "blind",
+    "timestamp": "2026-04-21T19:38:07.555189"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "opus",
+    "condition": "tool_guided",
+    "timestamp": "2026-04-21T19:38:12.406193"
+  },
+  {
+    "type": "baseline_done",
+    "example": "aos_vs_soa",
+    "run": 2,
+    "timestamp": "2026-04-21T20:04:24.106352"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:04:29.979255"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:04:34.612134"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:04:42.842878"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:04:50.162918"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "opus",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:04:57.900464"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:05:05.833855"
+  },
+  {
+    "type": "baseline_done",
+    "example": "column_major",
+    "run": 2,
+    "timestamp": "2026-04-21T20:05:07.240945"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:05:09.903305"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:05:12.586737"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:05:16.421028"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:05:20.331539"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "opus",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:05:25.014169"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:05:29.843494"
+  },
+  {
+    "type": "baseline_done",
+    "example": "hot_cold",
+    "run": 2,
+    "timestamp": "2026-04-21T20:05:32.484618"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:05:37.875179"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:05:43.622532"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:05:51.454023"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:06:00.129719"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "opus",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:06:08.987668"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:06:17.818049"
+  },
+  {
+    "type": "baseline_done",
+    "example": "pointer_chase",
+    "run": 2,
+    "timestamp": "2026-04-21T20:06:26.913874"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:06:29.283716"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:06:31.893590"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:06:36.429986"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:06:40.724567"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "opus",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:06:45.492613"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:06:50.526860"
+  },
+  {
+    "type": "baseline_done",
+    "example": "random_access",
+    "run": 2,
+    "timestamp": "2026-04-21T20:06:54.466869"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:07:04.120335"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:07:13.825809"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:07:21.466144"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:07:32.217360"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "opus",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:07:40.607246"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:07:52.949200"
+  },
+  {
+    "type": "baseline_done",
+    "example": "shared_variable",
+    "run": 2,
+    "timestamp": "2026-04-21T20:07:54.641545"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:08:04.902724"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:08:13.856377"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:08:26.039118"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:08:39.085783"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "opus",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:08:52.899037"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:09:05.427662"
+  },
+  {
+    "type": "baseline_done",
+    "example": "comprehensive",
+    "run": 2,
+    "timestamp": "2026-04-21T20:09:17.187567"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:09:27.757229"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:09:42.202319"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:10:06.209138"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:10:25.147623"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "opus",
+    "condition": "blind",
+    "run": 2,
+    "timestamp": "2026-04-21T20:10:42.710297"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 2,
+    "timestamp": "2026-04-21T20:11:03.727058"
+  },
+  {
+    "type": "baseline_done",
+    "example": "aos_vs_soa",
+    "run": 3,
+    "timestamp": "2026-04-21T20:11:07.037034"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:11:12.936482"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:11:18.566393"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:11:26.682466"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:11:33.673098"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "opus",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:11:41.697886"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:11:49.508907"
+  },
+  {
+    "type": "baseline_done",
+    "example": "column_major",
+    "run": 3,
+    "timestamp": "2026-04-21T20:11:50.867395"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:11:53.435532"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:11:56.676576"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:12:01.065913"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:12:06.080165"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "opus",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:12:10.696368"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:12:15.816956"
+  },
+  {
+    "type": "baseline_done",
+    "example": "hot_cold",
+    "run": 3,
+    "timestamp": "2026-04-21T20:12:18.521612"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:12:23.733828"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:12:28.944865"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:12:36.285101"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:12:44.256349"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "opus",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:12:52.979044"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:13:01.813256"
+  },
+  {
+    "type": "baseline_done",
+    "example": "pointer_chase",
+    "run": 3,
+    "timestamp": "2026-04-21T20:13:11.097680"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:13:13.511801"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:13:16.442717"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:13:20.542107"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:13:24.713106"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "opus",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:13:30.396895"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:13:34.978884"
+  },
+  {
+    "type": "baseline_done",
+    "example": "random_access",
+    "run": 3,
+    "timestamp": "2026-04-21T20:13:38.628590"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:13:48.198081"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:13:58.353565"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:14:05.776973"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:14:16.888277"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "opus",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:14:25.186461"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:14:37.224824"
+  },
+  {
+    "type": "baseline_done",
+    "example": "shared_variable",
+    "run": 3,
+    "timestamp": "2026-04-21T20:14:38.830221"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:14:45.521248"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:14:53.065402"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:15:06.024417"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:15:19.703689"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "opus",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:15:34.112914"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:15:46.394845"
+  },
+  {
+    "type": "baseline_done",
+    "example": "comprehensive",
+    "run": 3,
+    "timestamp": "2026-04-21T20:15:58.028596"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:16:09.997316"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:16:24.514055"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:16:50.445795"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:17:13.355700"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "opus",
+    "condition": "blind",
+    "run": 3,
+    "timestamp": "2026-04-21T20:17:34.849946"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 3,
+    "timestamp": "2026-04-21T20:17:57.949189"
+  },
+  {
+    "type": "baseline_done",
+    "example": "aos_vs_soa",
+    "run": 4,
+    "timestamp": "2026-04-21T20:18:01.411021"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:18:07.894844"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:18:12.702933"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:18:20.958130"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:18:28.601043"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "opus",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:18:36.273655"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:18:44.049098"
+  },
+  {
+    "type": "baseline_done",
+    "example": "column_major",
+    "run": 4,
+    "timestamp": "2026-04-21T20:18:45.392696"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:18:48.037736"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:18:50.769288"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:18:54.635861"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:18:58.497537"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "opus",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:19:03.374250"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:19:08.016218"
+  },
+  {
+    "type": "baseline_done",
+    "example": "hot_cold",
+    "run": 4,
+    "timestamp": "2026-04-21T20:19:10.720118"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:19:16.003984"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:19:21.395314"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:19:28.754860"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:19:37.148681"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "opus",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:19:45.879264"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:19:55.498919"
+  },
+  {
+    "type": "baseline_done",
+    "example": "pointer_chase",
+    "run": 4,
+    "timestamp": "2026-04-21T20:20:04.698910"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:20:07.085577"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:20:10.132634"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:20:14.315936"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:20:18.534778"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "opus",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:20:22.961663"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:20:27.658888"
+  },
+  {
+    "type": "baseline_done",
+    "example": "random_access",
+    "run": 4,
+    "timestamp": "2026-04-21T20:20:31.260988"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:20:40.714156"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:20:50.349486"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:20:58.600621"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:21:09.869409"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "opus",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:21:18.388357"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:21:31.156089"
+  },
+  {
+    "type": "baseline_done",
+    "example": "shared_variable",
+    "run": 4,
+    "timestamp": "2026-04-21T20:21:32.834860"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:21:38.971454"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:21:45.417480"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:21:57.749273"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:22:10.067525"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "opus",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:22:24.103521"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:22:38.925085"
+  },
+  {
+    "type": "baseline_done",
+    "example": "comprehensive",
+    "run": 4,
+    "timestamp": "2026-04-21T20:22:51.208113"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:23:03.647862"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:23:18.376453"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:23:46.326329"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:24:06.821464"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "opus",
+    "condition": "blind",
+    "run": 4,
+    "timestamp": "2026-04-21T20:24:28.169012"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 4,
+    "timestamp": "2026-04-21T20:24:50.243954"
+  },
+  {
+    "type": "baseline_done",
+    "example": "aos_vs_soa",
+    "run": 5,
+    "timestamp": "2026-04-21T20:24:53.699944"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:24:59.762278"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:25:05.540792"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:25:14.094420"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:25:21.227600"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "opus",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:25:29.085749"
+  },
+  {
+    "type": "cell_done",
+    "example": "aos_vs_soa",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:25:36.439904"
+  },
+  {
+    "type": "baseline_done",
+    "example": "column_major",
+    "run": 5,
+    "timestamp": "2026-04-21T20:25:37.866423"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:25:40.818280"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:25:43.834598"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:25:47.937979"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:25:52.063153"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "opus",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:25:57.536441"
+  },
+  {
+    "type": "cell_done",
+    "example": "column_major",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:26:01.857539"
+  },
+  {
+    "type": "baseline_done",
+    "example": "hot_cold",
+    "run": 5,
+    "timestamp": "2026-04-21T20:26:04.723540"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:26:10.162957"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:26:15.696971"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:26:23.182237"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:26:31.735906"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "opus",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:26:41.677490"
+  },
+  {
+    "type": "cell_done",
+    "example": "hot_cold",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:26:50.860877"
+  },
+  {
+    "type": "baseline_done",
+    "example": "pointer_chase",
+    "run": 5,
+    "timestamp": "2026-04-21T20:27:00.463684"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:27:03.264656"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:27:06.409299"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:27:10.529947"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:27:14.619870"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "opus",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:27:19.611001"
+  },
+  {
+    "type": "cell_done",
+    "example": "pointer_chase",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:27:24.676314"
+  },
+  {
+    "type": "baseline_done",
+    "example": "random_access",
+    "run": 5,
+    "timestamp": "2026-04-21T20:27:28.699575"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:27:38.571567"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:27:48.619873"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:27:57.012837"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:28:08.336371"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "opus",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:28:16.717303"
+  },
+  {
+    "type": "cell_done",
+    "example": "random_access",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:28:29.498453"
+  },
+  {
+    "type": "baseline_done",
+    "example": "shared_variable",
+    "run": 5,
+    "timestamp": "2026-04-21T20:28:31.149951"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:28:38.099586"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:28:44.015549"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:28:56.905330"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:29:09.146506"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "opus",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:29:23.042927"
+  },
+  {
+    "type": "cell_done",
+    "example": "shared_variable",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:29:35.713121"
+  },
+  {
+    "type": "baseline_done",
+    "example": "comprehensive",
+    "run": 5,
+    "timestamp": "2026-04-21T20:29:48.106114"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "haiku",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:30:03.765928"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "haiku",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:30:19.053872"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "sonnet",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:30:42.680131"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "sonnet",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:31:02.832888"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "opus",
+    "condition": "blind",
+    "run": 5,
+    "timestamp": "2026-04-21T20:31:20.566941"
+  },
+  {
+    "type": "cell_done",
+    "example": "comprehensive",
+    "model": "opus",
+    "condition": "tool_guided",
+    "run": 5,
+    "timestamp": "2026-04-21T20:31:41.170842"
+  }
+]
