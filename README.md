@@ -27,6 +27,14 @@ sudo apt install linux-perf libclang-19-dev zlib1g-dev libzstd-dev cmake g++ pyt
 sudo dnf install perf clang-devel llvm-devel zlib-devel libzstd-devel cmake gcc-c++ python3 binutils
 ```
 
+**Python packages:**
+
+```bash
+pip install -r requirements.txt
+```
+
+Or let `run.py` install only the LLM package you need via `--llm`.
+
 Allow `perf` to profile without root:
 
 ```bash
@@ -66,6 +74,7 @@ Pick the LLM with `--llm {claude,chatgpt,gemini}`. `copy` and `edit` read the AP
 
 | Rule | Severity | Detects |
 |------|----------|---------|
+| Shared variable | HIGH | False/true sharing of variables across threads (globals, ref/ptr params, lambda captures) |
 | Pointer chasing | HIGH | Linked-list traversal (`p = p->next`) in loops |
 | Strided access | HIGH | Column-major traversal of row-major arrays |
 | Random access | HIGH | Indirect array access (`arr[indices[i]]`) in loops |
@@ -105,34 +114,45 @@ python3 analysis/llm_integration.py data/results/recommendations.json \
 
 | File | Target pattern |
 |------|---------------|
-| `examples/comprehensive.cpp` | All six rules in one file (primary integration test) |
+| `examples/comprehensive.cpp` | All rules in one file (primary integration test) |
 | `examples/pointer_chase.cpp` | Pointer chasing |
 | `examples/column_major.cpp` | Strided access |
 | `examples/random_access.cpp` | Random / indirect access |
 | `examples/aos_vs_soa.cpp` | AoS to SoA |
 | `examples/hot_cold.cpp` | Hot/cold partition |
+| `examples/shared_variable.cpp` | Shared variable / false sharing |
+| `examples/lbm_d2q9.cpp` | Lattice Boltzmann D2Q9 (real-world) |
+| `examples/md_lennard_jones.cpp` | Molecular dynamics Lennard-Jones (real-world) |
+| `examples/nbody_intel.cpp` | N-body simulation Intel variant (real-world) |
+| `examples/nbody_mini.cpp` | N-body simulation mini (real-world) |
+| `examples/smallpt.cpp` | Smallpt path tracer (real-world) |
 
 ## Project Structure
 
 ```
 479_project/
 ├── run.py                        end-to-end driver (build, compile, profile, recommend)
+├── requirements.txt              Python dependencies
 ├── analysis/
 │   ├── CMakeLists.txt
 │   ├── ast_analyzer.cpp          Clang AST visitor → struct layouts + variable accesses
 │   ├── parser.py                 perf addresses → source line numbers
+│   ├── c2c_parser.py             perf c2c report → HITM (false sharing) data
 │   ├── analyze.py                correlate AST accesses with perf miss counts
 │   ├── recommend.py              orchestrator: load JSON, run rules, emit recommendations
 │   ├── llm_integration.py        hand code + recommendations to an LLM
 │   └── rules/                    one file per recommendation rule
+│       ├── __init__.py           rule registry
 │       ├── common.py             tunables, helpers, context builders
+│       ├── shared_variable.py
 │       ├── pointer_chasing.py
 │       ├── aos_to_soa.py
 │       ├── struct_reorder.py
 │       ├── hot_cold_partition.py
 │       ├── strided_access.py
 │       └── random_access.py
-├── examples/                     sample programs, one per pattern
+├── benchmark/                    benchmarking framework (grid benchmark, plotting)
+├── examples/                     sample programs, one per pattern + real-world programs
 ├── profiler/
 │   └── run_perf.sh               shell pipeline invoked by run.py
 └── data/
