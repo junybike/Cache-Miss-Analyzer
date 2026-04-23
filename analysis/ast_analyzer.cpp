@@ -134,8 +134,13 @@ public:
         }
 
         std::string qualifiedRecord(const clang::RecordDecl *RD) const {
-                if (!RD || RD->getName().empty()) return "";
-                return RD->getQualifiedNameAsString();
+                if (!RD) return "";
+                if (!RD->getName().empty())
+                        return RD->getQualifiedNameAsString();
+                // Anonymous struct — look for a typedef alias (e.g. typedef struct { ... } t_speed;)
+                if (auto *TD = RD->getTypedefNameForAnonDecl())
+                        return TD->getNameAsString();
+                return "";
         }
 
         std::string structTypeOf(const clang::MemberExpr *ME) const {

@@ -22,7 +22,7 @@ from collections import defaultdict
 FIELD_HEAT_RATIO = 0.2
 
 # AoS->SoA fires when this fraction of a struct's *bytes* is cold.
-AOS_WASTE_THRESHOLD = 0.4
+AOS_WASTE_THRESHOLD = 0.25
 MIN_FIELDS_AOS = 2
 
 # A struct must span at least this many cache lines before we suggest a
