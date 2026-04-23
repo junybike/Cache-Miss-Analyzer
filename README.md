@@ -5,13 +5,18 @@ Identifies which C++ variables cause the most CPU cache misses by combining Clan
 ## How It Works
 
 ```
-perf record ──► parser.py ──────┐
- (samples)    (addr→line)       ├──► analyze.py ──► recommend.py   ──►   llm_integration.py
-source.cpp ──► ast_analyzer ────┘   (correlate)    (pattern match)       (optional: LLM edit)
-               (AST→JSON)
+                    ┌──────────────► parser.py ───────────────┐
+                    │            (addr→line)                  │
+perf record ────────┤                                         ├──► analyze.py ──► recommend.py ──► llm_integration.py
+ (samples)          │                                         │     (correlate)    (pattern match)   (optional: LLM edit)
+                    └──────────────► c2c_parser.py ───────────┘
+                                 (cache-to-cache analysis)    │ 
+                                                              │ 
+source.cpp ────────► ast_analyzer ────────────────────────────┘
+                     (AST→JSON)
 ```
 
-`parser.py` and `ast_analyzer` run independently — one maps perf samples to source lines, the other extracts struct layouts and access patterns. `analyze.py` correlates them, and `recommend.py` pattern-matches the result into advice. Each stage reads and writes JSON. `llm_integration.py` optionally hands the recommendations and source to an LLM to apply the fixes.
+`parser.py` and `ast_analyzer` run independently — one maps perf samples to source lines, the other extracts struct layouts and access patterns. `c2c_parser.py` will run only if the source.cpp multithreads. `analyze.py` correlates them, and `recommend.py` pattern-matches the result into advice. Each stage reads and writes JSON. `llm_integration.py` optionally hands the recommendations and source to an LLM to apply the fixes.
 
 ## Dependencies
 
